@@ -15,6 +15,9 @@ package org.openhab.binding.worxlandroid.internal;
 import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.*;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,15 +25,19 @@ import java.util.stream.Stream;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.smarthome.config.discovery.DiscoveryService;
 import org.eclipse.smarthome.core.thing.Bridge;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
+import org.eclipse.smarthome.core.thing.ThingUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
 import org.eclipse.smarthome.core.thing.binding.ThingHandlerFactory;
 import org.eclipse.smarthome.io.net.http.HttpClientFactory;
+import org.openhab.binding.worxlandroid.internal.discovery.WorxLandroidDiscoveryParticipant;
 import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidAPIHandler;
 import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidHandler;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -44,14 +51,9 @@ import org.osgi.service.component.annotations.Reference;
 @Component(configurationPid = "binding.worxlandroid", service = ThingHandlerFactory.class)
 public class WorxLandroidHandlerFactory extends BaseThingHandlerFactory {
 
-    private @NonNullByDefault({}) HttpClient httpClient;
-
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream.of(THING_TYPE_WORX_LANDROID_API, THING_TYPE_MOWER).collect(Collectors.toSet()));
-
-    @Override
-    public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
-    }
+    private final Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
+    private @NonNullByDefault({}) HttpClient httpClient;
 
     @Reference
     protected void setHttpClientFactory(HttpClientFactory httpClientFactory) {
@@ -59,11 +61,20 @@ public class WorxLandroidHandlerFactory extends BaseThingHandlerFactory {
     }
 
     @Override
+    public boolean supportsThingType(ThingTypeUID thingTypeUID) {
+        return SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
+    }
+
+    @Override
     protected @Nullable ThingHandler createHandler(Thing thing) {
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
         if (THING_TYPE_WORX_LANDROID_API.equals(thingTypeUID)) {
-            return new WorxLandroidAPIHandler((Bridge) thing,httpClient);
+            WorxLandroidAPIHandler handler = new WorxLandroidAPIHandler((Bridge) thing, httpClient);
+            WorxLandroidDiscoveryParticipant discoveryService = new WorxLandroidDiscoveryParticipant(handler);
+            discoveryServiceRegs.put(handler.getThing().getUID(), bundleContext
+                    .registerService(DiscoveryService.class.getName(), discoveryService, new Hashtable<>()));
+            return handler;
         }
         if(THING_TYPE_MOWER.equals(thingTypeUID)){
             return new WorxLandroidHandler(thing);

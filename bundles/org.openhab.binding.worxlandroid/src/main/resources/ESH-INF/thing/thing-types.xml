@@ -6,15 +6,79 @@
 
 	<!-- OpenWeatherMap Binding -->
 	<thing-type id="mower">
-		<!--supported-bridge-type-refs>
+		<supported-bridge-type-refs>
 			<bridge-type-ref id="account" />
-		</supported-bridge-type-refs-->
+		</supported-bridge-type-refs>
 
 		<label>Mower</label>
 		<description>Mower</description>
 
-		<channel-groups>
-		</channel-groups>
+		<channels>
+			<channel id="Locked" typeId="locked" />
+			<channel id="DistanceCovered" typeId="distanceCovered" />
+			<channel id="MowerWorkTime" typeId="mowerWorkTime" />
+			<channel id="BladeWorkTime" typeId="bladeWorkTime" />
+			<channel id="BatteryChargeCycles" typeId="batteryChargeCycles" />
+			<channel id="MessagesIn" typeId="messagesIn" />
+			<channel id="MessagesOut" typeId="messagesOut" />
+			<channel id="PushNotifications" typeId="pushNotifications" />
+			<channel id="Location" typeId="system.location" />
+		</channels>
+
 	</thing-type>
+
+	<channel-type id="locked" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Locked status</label>
+		<description>Indicates whether mower is locked or not</description>
+	</channel-type>
+
+	<channel-type id="distanceCovered" advanced="false">
+		<item-type>Number:Length</item-type>
+		<label>Distance covered</label>
+		<description>The distance the mower has covered</description>
+		<state pattern="%d %unit%" />
+	</channel-type>
+
+	<channel-type id="mowerWorkTime" advanced="false">
+		<item-type>Number:Time</item-type>
+		<label>Mower work time</label>
+		<description>The hours the mower has worked</description>
+		<state pattern="%d %unit%" />
+	</channel-type>
+
+	<channel-type id="bladeWorkTime" advanced="false">
+		<item-type>Number:Time</item-type>
+		<label>Blade work time</label>
+		<description>The hours the blades have worked</description>
+		<state pattern="%d %unit%" />
+	</channel-type>
+
+	<channel-type id="batteryChargeCycles" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Battery charging cycles</label>
+		<description>The battery charging cycles</description>
+		<state pattern="%d" />
+	</channel-type>
+
+	<channel-type id="messagesIn" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Messages In</label>
+		<description>The amount of messages received by the Worx cloud service</description>
+		<state pattern="%d" />
+	</channel-type>
+
+	<channel-type id="messagesOut" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Messages In</label>
+		<description>The amount of messages received by the Worx cloud service</description>
+		<state pattern="%d" />
+	</channel-type>
+
+	<channel-type id="pushNotifications" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Push Notifications</label>
+		<description>Indicates whether push notifications are enabled or not</description>
+	</channel-type>
 
 </thing:thing-descriptions>

@@ -2,22 +2,22 @@ package org.openhab.binding.worxlandroid.internal.handler;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.thing.*;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
-import org.openhab.binding.worxlandroid.internal.connection.WorxLandroidRESTConnection;
-import org.openhab.binding.worxlandroid.internal.discovery.WorxLandroidDiscoveryParticipant;
+import org.eclipse.smarthome.io.net.http.HttpClientFactory;
+import org.openhab.binding.worxlandroid.internal.restconnection.UserResponse;
+import org.openhab.binding.worxlandroid.internal.restconnection.WorxLandroidRESTConnection;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.KeyStore;
 import java.util.Collections;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.*;
 
@@ -28,7 +28,7 @@ public class WorxLandroidAPIHandler extends BaseBridgeHandler {
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections.singleton(THING_TYPE_WORX_LANDROID_API);
 
-    private final HttpClient httpClient;
+    //private final HttpClient httpClient;
 
     public WorxLandroidRESTConnection getWorxLandroidRESTConnection() {
         return worxLandroidRESTConnection;
@@ -36,8 +36,12 @@ public class WorxLandroidAPIHandler extends BaseBridgeHandler {
 
     private @NonNullByDefault({}) WorxLandroidRESTConnection worxLandroidRESTConnection;
 
+    private @NonNullByDefault({}) HttpClient httpClient;
+
     Configuration config;
+
     private @NonNullByDefault({}) KeyStore keyStore;
+    private @NonNullByDefault({}) UserResponse userInfo;
 
     public boolean isConfigValid() {
         return configValid;
@@ -65,33 +69,53 @@ public class WorxLandroidAPIHandler extends BaseBridgeHandler {
         }
 
         if (configValid) {
-            worxLandroidRESTConnection = new WorxLandroidRESTConnection( httpClient,this);
+            worxLandroidRESTConnection = new WorxLandroidRESTConnection( this, httpClient);
 
                 keyStore = worxLandroidRESTConnection.getKeystore();
-                if(keyStore != null){
-                    logger.info("Successfully retrieved keystore.");
+                userInfo = worxLandroidRESTConnection.getUser();
+                if(keyStore != null && userInfo != null){
+                    logger.info("Successfully retrieved keystore and user info.");
                     updateStatus(ThingStatus.ONLINE);
-                    WorxLandroidDiscoveryParticipant worxLandroidDiscoveryParticipant = new WorxLandroidDiscoveryParticipant(this);
                 }else {
-                    logger.error("No keystore retrieved, cannot use bridge.");
+                    logger.error("No keystore and/or user info retrieved, cannot use bridge.");
                     updateStatus(ThingStatus.UNINITIALIZED);
                 }
 
-            /*
-            if (refreshJob == null || refreshJob.isCancelled()) {
-                logger.debug("Start refresh job at interval {} min.", refreshInterval);
-                refreshJob = scheduler.scheduleWithFixedDelay(this::updateThings, INITIAL_DELAY_IN_SECONDS,
-                        TimeUnit.MINUTES.toSeconds(refreshInterval), TimeUnit.SECONDS);
-            }
-             */
         }
 
+    }
+
+    public KeyStore getKeyStore() { return this.keyStore; }
+
+    public UserResponse getUserInfo() {
+        return this.userInfo;
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
 
     }
+
+    /*
+    private void updateThings() {
+        ThingStatus status = ThingStatus.OFFLINE;
+        for (Thing thing : getThing().getThings()) {
+            if (ThingStatus.ONLINE.equals(updateThing((WorxLandroidHandler) thing.getHandler(), thing))) {
+                status = ThingStatus.ONLINE;
+            }
+        }
+        updateStatus(status);
+    }
+
+    private ThingStatus updateThing(@Nullable WorxLandroidHandler handler, Thing thing) {
+        if (handler != null && worxLandroidRESTConnection != null) {
+            handler.updateData(worxLandroidRESTConnection);
+            return thing.getStatus();
+        } else {
+            logger.debug("Cannot update weather data of thing '{}' as location handler is null.", thing.getUID());
+            return ThingStatus.OFFLINE;
+        }
+    }*/
 
     public Configuration getWorxLandroidAPIConfig() {
         return config;

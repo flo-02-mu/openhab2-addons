@@ -1,4 +1,4 @@
-package org.openhab.binding.worxlandroid.internal.connection;
+package org.openhab.binding.worxlandroid.internal.restconnection;
 
 public class CertificateResponse {
     long id;

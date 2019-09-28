@@ -34,6 +34,8 @@ public class WorxLandroidBindingConstants {
     public static final String MAC = "mac";
     public static final String NAME = "name";
     public static final String FIRMWARE_VERSION = "firmware_version";
+    public static final String TOPIC_COMMAND_IN = "topic_command_in";
+    public static final String TOPIC_COMMAND_OUT = "topic_command_out";
 
 
     // List of all Thing Type UIDs

@@ -1,20 +1,21 @@
-package org.openhab.binding.worxlandroid.internal.connection;
+package org.openhab.binding.worxlandroid.internal.restconnection;
 
 import com.google.gson.Gson;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.api.AuthenticationStore;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.smarthome.io.net.http.HttpClientFactory;
 import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidAPIHandler;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.HttpMethod;
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
@@ -22,7 +23,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.util.Base64;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -36,20 +36,20 @@ public class WorxLandroidRESTConnection {
 
     private static final String WORX_API_BASE = "https://api.worxlandroid.com/api/v2";
     private static final String TOKEN_ENDPOINT = WORX_API_BASE + "/oauth/token";
-    private static final String ME_ENDPOINT = WORX_API_BASE+ "users/me";
+    private static final String ME_ENDPOINT = WORX_API_BASE+ "/users/me";
     private static final String CERTIFICATE_ENDPOINT = WORX_API_BASE + "/users/certificate";
     private static final String PRODUCT_ITEMS_ENDPOINT = WORX_API_BASE + "/product-items";
 
     private static final String CLIENT_SECRET = "nCH3A0WvMYn66vGorjSrnGZ2YtjQWDiCvjg7jNxK";
 
-    HttpClient httpClient;
+    private final HttpClient httpClient;
     WorxLandroidAPIHandler worxLandroidAPIHandler;
     String oauthToken;
 
 
-    public WorxLandroidRESTConnection(HttpClient httpClient, WorxLandroidAPIHandler worxLandroidAPIHandler){
-        this.httpClient = httpClient;
+    public WorxLandroidRESTConnection(WorxLandroidAPIHandler worxLandroidAPIHandler, HttpClient httpClient){
         this.worxLandroidAPIHandler = worxLandroidAPIHandler;
+        this.httpClient = httpClient;
     }
 
     private String getOAuthToken() {
@@ -162,7 +162,7 @@ public class WorxLandroidRESTConnection {
         return keyStore;
     }
 
-    public List<Mower> getMowers(){
+    public Mower[] getMowers(){
 
         Request request = httpClient.newRequest(PRODUCT_ITEMS_ENDPOINT);
         request.method(HttpMethod.GET);
@@ -170,16 +170,16 @@ public class WorxLandroidRESTConnection {
             getOAuthToken();
         }
         if(oauthToken != "") {
-            request.header("Authorization","Bearer + "+oauthToken);
+            request.header("Authorization","Bearer "+oauthToken);
             try {
                 ContentResponse contentResponse = request.send();
                 int httpStatus = contentResponse.getStatus();
                 String content = contentResponse.getContentAsString();
                 String errorMessage = StringUtils.EMPTY;
-                logger.debug("Get Certificate reply: {}",content);
+                logger.debug("Get Mowers reply: {}",content);
                 switch (httpStatus) {
                     case OK_200:
-                        return (new Gson().fromJson(content,ProductResponse.class)).mowers;
+                        return (new Gson().fromJson(content,Mower[].class));
                     case BAD_REQUEST_400:
                     case UNAUTHORIZED_401:
                     case NOT_FOUND_404:
@@ -194,6 +194,47 @@ public class WorxLandroidRESTConnection {
                 }
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
                 logger.error("Error while retrieving keystore: {} ",e);
+            }
+        }else{
+            logger.error("No authentication header available!");
+            return null;
+        }
+        return null;
+    }
+
+
+    public UserResponse getUser(){
+
+        Request request = httpClient.newRequest(ME_ENDPOINT);
+        request.method(HttpMethod.GET);
+        if(oauthToken == "") {
+            getOAuthToken();
+        }
+        if(oauthToken != "") {
+            request.header("Authorization","Bearer "+oauthToken);
+            try {
+                ContentResponse contentResponse = request.send();
+                int httpStatus = contentResponse.getStatus();
+                String content = contentResponse.getContentAsString();
+                String errorMessage = StringUtils.EMPTY;
+                logger.debug("Get users/me reply: {}",content);
+                switch (httpStatus) {
+                    case OK_200:
+                        return (new Gson().fromJson(content,UserResponse.class));
+                    case BAD_REQUEST_400:
+                    case UNAUTHORIZED_401:
+                    case NOT_FOUND_404:
+                        errorMessage = content;
+                        logger.debug("Worx server responded with status code {}: {}", httpStatus, errorMessage);
+                        //throw new WorxLandroidConfigurationException(errorMessage);
+                    case TOO_MANY_REQUESTS_429:
+                    default:
+                        errorMessage = content;
+                        logger.debug("Worx server responded with status code {}: {}", httpStatus, errorMessage);
+                        //throw new WorxLandroidCommunicationException(errorMessage);
+                }
+            } catch (InterruptedException | TimeoutException | ExecutionException e) {
+                logger.error("Error while retrieving user info: {} ",e);
             }
         }else{
             logger.error("No authentication header available!");

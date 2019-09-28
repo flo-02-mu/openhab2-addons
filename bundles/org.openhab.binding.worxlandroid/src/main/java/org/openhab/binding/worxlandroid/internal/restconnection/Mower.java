@@ -1,4 +1,4 @@
-package org.openhab.binding.worxlandroid.internal.connection;
+package org.openhab.binding.worxlandroid.internal.restconnection;
 
 import java.math.BigDecimal;
 
@@ -60,6 +60,9 @@ public class Mower {
         return firmware_version;
     }
 
+    public MqttTopics getMqtt_topics() {
+        return this.mqtt_topics;
+    }
 
     class Location{
         BigDecimal latitude;
@@ -76,8 +79,18 @@ public class Mower {
         String updated_at;
     }
 
-    class MqttTopics{
+    public class MqttTopics{
         String command_in;
         String command_out;
+
+        public String getCommand_in() {
+            return this.command_in;
+        }
+
+        public String getCommand_out() {
+            return this.command_out;
+        }
+
+
     }
 }
