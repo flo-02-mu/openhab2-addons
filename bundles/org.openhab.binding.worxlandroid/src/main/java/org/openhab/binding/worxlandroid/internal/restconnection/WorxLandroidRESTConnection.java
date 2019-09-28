@@ -1,16 +1,12 @@
 package org.openhab.binding.worxlandroid.internal.restconnection;
 
 import com.google.gson.Gson;
-import org.apache.commons.lang.StringUtils;
-import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.smarthome.io.net.http.HttpClientFactory;
 import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidAPIHandler;
-import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +39,8 @@ public class WorxLandroidRESTConnection {
     private static final String CLIENT_SECRET = "nCH3A0WvMYn66vGorjSrnGZ2YtjQWDiCvjg7jNxK";
 
     private final HttpClient httpClient;
-    WorxLandroidAPIHandler worxLandroidAPIHandler;
-    String oauthToken;
+    private WorxLandroidAPIHandler worxLandroidAPIHandler;
+    private String oauthToken;
 
 
     public WorxLandroidRESTConnection(WorxLandroidAPIHandler worxLandroidAPIHandler, HttpClient httpClient){
@@ -70,17 +66,17 @@ public class WorxLandroidRESTConnection {
         logger.debug("Auth payload: {}",authPayload);
         request.content(authPayload, "application/json");
 
-        ContentResponse contentResponse = null;
+        ContentResponse contentResponse;
         try {
             contentResponse = request.send();
         } catch (InterruptedException | TimeoutException | ExecutionException e) {
-            logger.error("Error while retrieving auth token: {}",e);
+            logger.error("Error while retrieving auth token: ",e);
             return null;
         }
 
         int httpStatus = contentResponse.getStatus();
         String content = contentResponse.getContentAsString();
-        String errorMessage = StringUtils.EMPTY;
+        String errorMessage;
         logger.trace("Worx response: status = {}, content = '{}'", httpStatus, content);
         switch (httpStatus) {
             case OK_200:
@@ -105,10 +101,10 @@ public class WorxLandroidRESTConnection {
      * @return KeyStore required for MQTT
      */
     public KeyStore getKeystore(){
-        if(oauthToken == "" ||oauthToken == null) {
+        if("".equals(oauthToken) ||oauthToken == null) {
             this.oauthToken = getOAuthToken();
         }
-        if(oauthToken != "") {
+        if(!"".equals(oauthToken)) {
             Request request = httpClient.newRequest(CERTIFICATE_ENDPOINT);
             request.method(HttpMethod.GET);
             request.header(HttpHeader.ACCEPT, "*/*");
@@ -119,7 +115,7 @@ public class WorxLandroidRESTConnection {
                 ContentResponse contentResponse = request.send();
                 int httpStatus = contentResponse.getStatus();
                 String content = contentResponse.getContentAsString();
-                String errorMessage = StringUtils.EMPTY;
+                String errorMessage;
                 logger.debug("Get Certificate reply: {}",content);
                 switch (httpStatus) {
                     case OK_200:
@@ -137,7 +133,7 @@ public class WorxLandroidRESTConnection {
                         //throw new WorxLandroidCommunicationException(errorMessage);
                 }
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                logger.error("Error while retrieving keystore: {} ",e);
+                logger.error("Error while retrieving keystore: ",e);
             }
         }else{
             logger.error("No authentication header available!");
@@ -148,13 +144,14 @@ public class WorxLandroidRESTConnection {
     }
 
     private KeyStore extractKeystore(String pkcs12) {
+
         byte [] pkcs12Binary = Base64.getDecoder().decode(pkcs12.getBytes((StandardCharsets.UTF_8)));
         ByteArrayInputStream keyStoreInputStream = new ByteArrayInputStream(pkcs12Binary);
 
         KeyStore keyStore = null;
         try {
             keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keyStore.load(keyStoreInputStream, null );
+            keyStore.load(keyStoreInputStream, "".toCharArray() );
         } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
             logger.error("Cannot load keystore: ",e);
         }
@@ -166,16 +163,16 @@ public class WorxLandroidRESTConnection {
 
         Request request = httpClient.newRequest(PRODUCT_ITEMS_ENDPOINT);
         request.method(HttpMethod.GET);
-        if(oauthToken == "") {
+        if("".equals(oauthToken)) {
             getOAuthToken();
         }
-        if(oauthToken != "") {
+        if(!"".equals(oauthToken)) {
             request.header("Authorization","Bearer "+oauthToken);
             try {
                 ContentResponse contentResponse = request.send();
                 int httpStatus = contentResponse.getStatus();
                 String content = contentResponse.getContentAsString();
-                String errorMessage = StringUtils.EMPTY;
+                String errorMessage;
                 logger.debug("Get Mowers reply: {}",content);
                 switch (httpStatus) {
                     case OK_200:
@@ -193,7 +190,7 @@ public class WorxLandroidRESTConnection {
                         //throw new WorxLandroidCommunicationException(errorMessage);
                 }
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                logger.error("Error while retrieving keystore: {} ",e);
+                logger.error("Error while retrieving keystore: ",e);
             }
         }else{
             logger.error("No authentication header available!");
@@ -207,16 +204,16 @@ public class WorxLandroidRESTConnection {
 
         Request request = httpClient.newRequest(ME_ENDPOINT);
         request.method(HttpMethod.GET);
-        if(oauthToken == "") {
+        if("".equals(oauthToken)) {
             getOAuthToken();
         }
-        if(oauthToken != "") {
+        if(!"".equals(oauthToken)) {
             request.header("Authorization","Bearer "+oauthToken);
             try {
                 ContentResponse contentResponse = request.send();
                 int httpStatus = contentResponse.getStatus();
                 String content = contentResponse.getContentAsString();
-                String errorMessage = StringUtils.EMPTY;
+                String errorMessage;
                 logger.debug("Get users/me reply: {}",content);
                 switch (httpStatus) {
                     case OK_200:
@@ -234,7 +231,7 @@ public class WorxLandroidRESTConnection {
                         //throw new WorxLandroidCommunicationException(errorMessage);
                 }
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                logger.error("Error while retrieving user info: {} ",e);
+                logger.error("Error while retrieving user info: ",e);
             }
         }else{
             logger.error("No authentication header available!");

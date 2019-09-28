@@ -1,21 +1,16 @@
 package org.openhab.binding.worxlandroid.internal.mqtt;
 
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.util.UUID;
-
-import javax.net.SocketFactory;
-
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.net.SocketFactory;
+import java.security.*;
 
 public class MqttConnection {
 
@@ -33,12 +28,13 @@ public class MqttConnection {
         this.keyStore = keyStore;
         this.topicIn = topicIn;
         this.topicOut = topicOut;
-        this.url = "ssl:/"+url;
-        this.mqttClient = new MqttClient(this.url,client);
+        this.url = "ssl://"+url;
+        this.mqttClient = new MqttClient(this.url,client,new MemoryPersistence());
     }
 
     public void start(MqttCallback mqttCallback) throws MqttException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        SocketFactory socketFactory = new AwsSocketFactory(keyStore,"");
+        logger.debug("Using keystore {}",keyStore.aliases());
+        SocketFactory socketFactory = new AwsIotTlsSocketFactory(keyStore,"");
 
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setAutomaticReconnect(true);
