@@ -199,6 +199,46 @@ public class WorxLandroidRESTConnection {
         return null;
     }
 
+    public Mower getMowerStatus(String serialNumber){
+
+        Request request = httpClient.newRequest(PRODUCT_ITEMS_ENDPOINT+"/"+serialNumber);
+        request.method(HttpMethod.GET);
+        if("".equals(oauthToken)) {
+            getOAuthToken();
+        }
+        if(!"".equals(oauthToken)) {
+            request.header("Authorization","Bearer "+oauthToken);
+            try {
+                ContentResponse contentResponse = request.send();
+                int httpStatus = contentResponse.getStatus();
+                String content = contentResponse.getContentAsString();
+                String errorMessage;
+                logger.debug("Get MowerStatus reply: {}",content);
+                switch (httpStatus) {
+                    case OK_200:
+                        return (new Gson().fromJson(content,Mower.class));
+                    case BAD_REQUEST_400:
+                    case UNAUTHORIZED_401:
+                    case NOT_FOUND_404:
+                        errorMessage = content;
+                        logger.debug("Worx server responded with status code {}: {}", httpStatus, errorMessage);
+                        //throw new WorxLandroidConfigurationException(errorMessage);
+                    case TOO_MANY_REQUESTS_429:
+                    default:
+                        errorMessage = content;
+                        logger.debug("Worx server responded with status code {}: {}", httpStatus, errorMessage);
+                        //throw new WorxLandroidCommunicationException(errorMessage);
+                }
+            } catch (InterruptedException | TimeoutException | ExecutionException e) {
+                logger.error("Error while retrieving keystore: ",e);
+            }
+        }else{
+            logger.error("No authentication header available!");
+            return null;
+        }
+        return null;
+    }
+
 
     public UserResponse getUser(){
 

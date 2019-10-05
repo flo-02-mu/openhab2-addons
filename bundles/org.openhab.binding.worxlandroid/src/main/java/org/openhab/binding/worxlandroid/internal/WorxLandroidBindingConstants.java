@@ -36,6 +36,7 @@ public class WorxLandroidBindingConstants {
     public static final String FIRMWARE_VERSION = "firmware_version";
     public static final String TOPIC_COMMAND_IN = "topic_command_in";
     public static final String TOPIC_COMMAND_OUT = "topic_command_out";
+    public static final String SERIAL_NUMBER = "serial_number";
 
 
     // List of all Thing Type UIDs

@@ -12,37 +12,32 @@
  */
 package org.openhab.binding.worxlandroid.internal.handler;
 
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.util.Map;
-
+import com.google.gson.Gson;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
-import org.eclipse.smarthome.core.semantics.model.property.Properties;
-import org.eclipse.smarthome.core.thing.Bridge;
-import org.eclipse.smarthome.core.thing.ChannelUID;
-import org.eclipse.smarthome.core.thing.Thing;
-import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.thing.*;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
-import org.openhab.binding.worxlandroid.internal.WorxLandroidConfiguration;
+import org.openhab.binding.worxlandroid.internal.mqtt.MowerInfo;
 import org.openhab.binding.worxlandroid.internal.mqtt.MqttConnection;
 import org.openhab.binding.worxlandroid.internal.restconnection.Mower;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.gson.Gson;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.CHANNEL_1;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.TOPIC_COMMAND_IN;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.TOPIC_COMMAND_OUT;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.*;
 
 /**
  * The {@link WorxLandroidHandler} is responsible for handling commands, which are
@@ -55,22 +50,17 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
 
     private final Logger logger = LoggerFactory.getLogger(WorxLandroidHandler.class);
 
-    private @Nullable WorxLandroidConfiguration config;
+    private @Nullable Configuration config;
+    private WorxLandroidAPIHandler bridge;
     private @NonNullByDefault({}) MqttConnection mqttConnection;
-    private @NonNullByDefault({}) Mower mower;
+    private @NonNullByDefault({}) MowerInfo mower;
+
+    private ScheduledFuture<?> refreshJob;
+    private final int DEFAULT_REFRESH_INTERVAL = 10;
 
     public WorxLandroidHandler(Thing thing) {
         super(thing);
         initialize();
-
-        /*
-            if (refreshJob == null || refreshJob.isCancelled()) {
-                logger.debug("Start refresh job at interval {} min.", refreshInterval);
-                refreshJob = scheduler.scheduleWithFixedDelay(this::updateThings, INITIAL_DELAY_IN_SECONDS,
-                        TimeUnit.MINUTES.toSeconds(refreshInterval), TimeUnit.SECONDS);
-            }
-
-         */
 
     }
 
@@ -79,24 +69,24 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
         Bridge bridge2 = this.getBridge();
         if(bridge2 == null){
             logger.warn("No bridge selected yet, cannot initialize thing");
-            //updateStatus(ThingStatus.UNINITIALIZED);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING, "No bridge selected yet!");
             return;
         }
 
         logger.debug("Bridge: {}",bridge2);
         logger.debug("Bridge.getHandler: {}",bridge2.getHandler());
-        WorxLandroidAPIHandler bridge = (WorxLandroidAPIHandler)getBridge().getHandler();
-        Map<String, String> properties = thing.getProperties();
-        try {
-            mqttConnection = new MqttConnection(bridge.getKeyStore(),
-                    properties.get(TOPIC_COMMAND_IN),
-                    properties.get(TOPIC_COMMAND_OUT),
-                    bridge.getUserInfo().getMqtt_endpoint());
+        this.bridge = (WorxLandroidAPIHandler)getBridge().getHandler();
+        config = thing.getConfiguration();
 
-            mqttConnection.start(this);
-        } catch (MqttException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
-            logger.error("Error while establishing MQTT connection to worx server: {}",e);
+        // Only if the mower device is online (connected to wifi), the device can be
+        // controlled/checked via the MQTT queue.
+        // Therefore the status is checked via REST every 10 minutes.
+        if (refreshJob == null || refreshJob.isCancelled()) {
+            logger.debug("Start refresh job at interval {} min.", DEFAULT_REFRESH_INTERVAL);
+            refreshJob = scheduler.scheduleWithFixedDelay(statusJob,0,
+                    TimeUnit.MINUTES.toSeconds(DEFAULT_REFRESH_INTERVAL), TimeUnit.MINUTES);
         }
+
     }
 
 
@@ -116,6 +106,20 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
         }
     }
 
+    private void startMqttConnection(){
+        logger.debug("Starting MQTT connection...");
+        try {
+            mqttConnection = new MqttConnection(bridge.getKeyStore(),
+                    (String)config.get(TOPIC_COMMAND_IN),
+                    (String)config.get(TOPIC_COMMAND_OUT),
+                    bridge.getUserInfo().getMqtt_endpoint());
+
+            mqttConnection.start(this);
+        } catch (MqttException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyStoreException | KeyManagementException e) {
+            logger.error("Error while establishing MQTT connection to worx server: {}",e);
+        }
+    }
+
     @Override
     public void dispose(){
         logger.debug("Disposing thing {}",thing);
@@ -123,10 +127,24 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
             try {
                 mqttConnection.stop();
             } catch (MqttException e) {
-                logger.error("Error while disconnecting from mqtt server: {}", e);
+                logger.error("Error while disconnecting from mqtt server: ", e);
             }
         }
     }
+
+    private Runnable statusJob = new Runnable() {
+        @Override
+        public void run() {
+            Mower mower = bridge.getWorxLandroidRESTConnection().getMowerStatus((String) config.get(SERIAL_NUMBER));
+            logger.debug("Reply for status call on serial {} : {}", (String) config.get(SERIAL_NUMBER), mower);
+            if (mower.isOnline()) {
+                updateStatus(ThingStatus.ONLINE);
+                startMqttConnection();
+            } else {
+                updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Worx server states mower as offline");
+            }
+        }
+    };
 
     @Override
     public void connectionLost(@Nullable Throwable throwable) {
@@ -136,8 +154,9 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
     @Override
     public void messageArrived(@Nullable String s, @Nullable MqttMessage mqttMessage) {
         logger.debug("On topic {} received message {}",s,mqttMessage);
-        mower = new Gson().fromJson(mqttMessage.getPayload().toString(),Mower.class);
-        logger.debug("Parsed object serial number: {}",mower.getSerial_number());
+        mower = new Gson().fromJson(mqttMessage.getPayload().toString(), MowerInfo.class);
+        logger.debug("Parsed object serial number: {}",mower.getCfg().getSn());
+        logger.debug("Parsed object RSI: {}",mower.getDat().getRsi());
     }
 
     @Override

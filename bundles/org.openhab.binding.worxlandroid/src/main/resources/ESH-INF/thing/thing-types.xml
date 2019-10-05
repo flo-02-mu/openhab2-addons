@@ -13,6 +13,25 @@
 		<label>Mower</label>
 		<description>Mower</description>
 
+		<config-description>
+			<parameter name="mac" type="text" required="true">
+				<label>MAC Address</label>
+				<description>MAC address of the mower (HEX, without delimiter)</description>
+			</parameter>
+			<parameter name="serial_number" type="text" required="true">
+				<label>Serial Number</label>
+				<description>The serial number of the mower</description>
+			</parameter>
+			<parameter name="topic_command_in" type="text" required="true">
+				<label>Topic in</label>
+				<description>The MQTT topic name to subscribe to for inbound messages</description>
+			</parameter>
+			<parameter name="topic_command_out" type="text" required="true">
+				<label>Topic out</label>
+				<description>The MQTT topic name to subscribe to for outbound messages</description>
+			</parameter>
+		</config-description>
+
 		<channels>
 			<channel id="Locked" typeId="locked" />
 			<channel id="DistanceCovered" typeId="distanceCovered" />

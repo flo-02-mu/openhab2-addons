@@ -5,9 +5,9 @@ import org.eclipse.smarthome.config.discovery.AbstractDiscoveryService;
 import org.eclipse.smarthome.config.discovery.DiscoveryResult;
 import org.eclipse.smarthome.config.discovery.DiscoveryResultBuilder;
 import org.eclipse.smarthome.core.thing.ThingUID;
+import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidAPIHandler;
 import org.openhab.binding.worxlandroid.internal.restconnection.Mower;
 import org.openhab.binding.worxlandroid.internal.restconnection.WorxLandroidRESTConnection;
-import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidAPIHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +56,7 @@ public class WorxLandroidDiscoveryParticipant extends AbstractDiscoveryService {
             properties.put(FIRMWARE_VERSION,mower.getFirmware_version());
             properties.put(TOPIC_COMMAND_OUT,mower.getMqtt_topics().getCommand_out());
             properties.put(TOPIC_COMMAND_IN,mower.getMqtt_topics().getCommand_in());
+            properties.put(SERIAL_NUMBER,mower.getSerial_number());
 
             logger.debug("Property map: {}",properties);
 

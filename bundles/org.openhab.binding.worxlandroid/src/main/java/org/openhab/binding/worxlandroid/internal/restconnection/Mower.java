@@ -64,6 +64,10 @@ public class Mower {
         return this.mqtt_topics;
     }
 
+    public boolean isOnline() {
+        return online;
+    }
+
     class Location{
         BigDecimal latitude;
         BigDecimal longitude;
