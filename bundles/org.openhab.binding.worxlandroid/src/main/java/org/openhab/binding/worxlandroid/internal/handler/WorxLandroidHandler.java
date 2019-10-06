@@ -13,6 +13,7 @@
 package org.openhab.binding.worxlandroid.internal.handler;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -141,22 +142,38 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
             logger.debug("Reply for status call on serial {} : {}", (String) config.get(SERIAL_NUMBER), mower);
             if (mower.isOnline()) {
                 updateStatus(ThingStatus.ONLINE);
-                startMqttConnection();
+                if(mqttConnection != null){
+                    logger.debug("Is connected? "+mqttConnection.isConnected());
+                }
+                if(mqttConnection == null || !mqttConnection.isConnected()){
+                    startMqttConnection();
+                }else{
+                    logger.debug("MQTT client still connected, not opening a new one.");
+                }
             } else {
                 updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.NONE, "Worx server states mower as offline");
+                try {
+                    mqttConnection.stop();
+                } catch (MqttException e) {
+                    logger.error("Error while closing mqtt cocnnection: ",e);
+                }
             }
         }
     };
 
     @Override
     public void connectionLost(@Nullable Throwable throwable) {
-        logger.warn("MQTT connection lost, automatically reconnecting");
+        logger.warn("MQTT connection lost, automatically reconnecting {}",throwable);
     }
 
     @Override
     public void messageArrived(@Nullable String s, @Nullable MqttMessage mqttMessage) {
         logger.debug("On topic {} received message {}",s,mqttMessage);
-        mower = new Gson().fromJson(mqttMessage.getPayload().toString(), MowerInfo.class);
+        try {
+            mower = new Gson().fromJson(mqttMessage.getPayload().toString(), MowerInfo.class);
+        }catch(JsonSyntaxException |IllegalStateException e){
+            logger.error("Error while serializing object:", e);
+        }
         logger.debug("Parsed object serial number: {}",mower.getCfg().getSn());
         logger.debug("Parsed object RSI: {}",mower.getDat().getRsi());
     }

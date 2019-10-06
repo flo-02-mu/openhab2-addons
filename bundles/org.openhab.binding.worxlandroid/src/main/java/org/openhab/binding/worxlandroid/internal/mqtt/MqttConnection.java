@@ -37,7 +37,8 @@ public class MqttConnection {
         SocketFactory socketFactory = new AwsIotTlsSocketFactory(keyStore,"");
 
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
-        mqttConnectOptions.setAutomaticReconnect(true);
+        mqttConnectOptions.setCleanSession(true);
+        //mqttConnectOptions.setAutomaticReconnect(true);
         mqttConnectOptions.setSocketFactory(socketFactory);
 
         mqttClient.connect(mqttConnectOptions);
@@ -48,8 +49,18 @@ public class MqttConnection {
     }
 
     public void stop() throws MqttException {
-        mqttClient.disconnect();
-        mqttClient.close();
+        try {
+            mqttClient.disconnect();
+        } catch (MqttException e) {
+            logger.error("Error while disconnecting mqtt: ",e);
+        } finally {
+            mqttClient.close();
+        }
+
+    }
+
+    public boolean isConnected(){
+        return mqttClient.isConnected();
     }
 
 }
