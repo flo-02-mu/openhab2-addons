@@ -51,10 +51,11 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
     private final Logger logger = LoggerFactory.getLogger(WorxLandroidHandler.class);
 
     private @Nullable Configuration config;
-    private WorxLandroidAPIHandler bridge;
+    private @Nullable WorxLandroidAPIHandler bridge;
     private @NonNullByDefault({}) MqttConnection mqttConnection;
     private @NonNullByDefault({}) MowerInfo mower;
 
+    @Nullable
     private ScheduledFuture<?> refreshJob;
     private final int DEFAULT_REFRESH_INTERVAL = 10;
 
@@ -66,15 +67,13 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
 
     @Override
     public void initialize(){
-        Bridge bridge2 = this.getBridge();
-        if(bridge2 == null){
+
+        if(this.getBridge() == null){
             logger.warn("No bridge selected yet, cannot initialize thing");
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_PENDING, "No bridge selected yet!");
             return;
         }
 
-        logger.debug("Bridge: {}",bridge2);
-        logger.debug("Bridge.getHandler: {}",bridge2.getHandler());
         this.bridge = (WorxLandroidAPIHandler)getBridge().getHandler();
         config = thing.getConfiguration();
 
@@ -84,7 +83,7 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
         if (refreshJob == null || refreshJob.isCancelled()) {
             logger.debug("Start refresh job at interval {} min.", DEFAULT_REFRESH_INTERVAL);
             refreshJob = scheduler.scheduleWithFixedDelay(statusJob,0,
-                    TimeUnit.MINUTES.toSeconds(DEFAULT_REFRESH_INTERVAL), TimeUnit.MINUTES);
+                    DEFAULT_REFRESH_INTERVAL, TimeUnit.MINUTES);
         }
 
     }
@@ -123,6 +122,9 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
     @Override
     public void dispose(){
         logger.debug("Disposing thing {}",thing);
+        if(refreshJob != null) {
+            refreshJob.cancel(true);
+        }
         if(mqttConnection != null) {
             try {
                 mqttConnection.stop();

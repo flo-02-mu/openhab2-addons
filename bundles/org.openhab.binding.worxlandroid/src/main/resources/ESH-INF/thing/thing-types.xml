@@ -13,6 +13,18 @@
 		<label>Mower</label>
 		<description>Mower</description>
 
+		<channels>
+			<channel id="Locked" typeId="locked" />
+			<channel id="DistanceCovered" typeId="distanceCovered" />
+			<channel id="MowerWorkTime" typeId="mowerWorkTime" />
+			<channel id="BladeWorkTime" typeId="bladeWorkTime" />
+			<channel id="BatteryChargeCycles" typeId="batteryChargeCycles" />
+			<channel id="MessagesIn" typeId="messagesIn" />
+			<channel id="MessagesOut" typeId="messagesOut" />
+			<channel id="PushNotifications" typeId="pushNotifications" />
+			<channel id="Location" typeId="system.location" />
+		</channels>
+
 		<config-description>
 			<parameter name="mac" type="text" required="true">
 				<label>MAC Address</label>
@@ -32,17 +44,6 @@
 			</parameter>
 		</config-description>
 
-		<channels>
-			<channel id="Locked" typeId="locked" />
-			<channel id="DistanceCovered" typeId="distanceCovered" />
-			<channel id="MowerWorkTime" typeId="mowerWorkTime" />
-			<channel id="BladeWorkTime" typeId="bladeWorkTime" />
-			<channel id="BatteryChargeCycles" typeId="batteryChargeCycles" />
-			<channel id="MessagesIn" typeId="messagesIn" />
-			<channel id="MessagesOut" typeId="messagesOut" />
-			<channel id="PushNotifications" typeId="pushNotifications" />
-			<channel id="Location" typeId="system.location" />
-		</channels>
 
 	</thing-type>
 
