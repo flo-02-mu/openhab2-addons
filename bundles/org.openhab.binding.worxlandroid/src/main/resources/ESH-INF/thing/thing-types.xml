@@ -14,15 +14,21 @@
 		<description>Mower</description>
 
 		<channels>
-			<channel id="Locked" typeId="locked" />
-			<channel id="DistanceCovered" typeId="distanceCovered" />
-			<channel id="MowerWorkTime" typeId="mowerWorkTime" />
-			<channel id="BladeWorkTime" typeId="bladeWorkTime" />
-			<channel id="BatteryChargeCycles" typeId="batteryChargeCycles" />
-			<channel id="MessagesIn" typeId="messagesIn" />
-			<channel id="MessagesOut" typeId="messagesOut" />
-			<channel id="PushNotifications" typeId="pushNotifications" />
-			<channel id="Location" typeId="system.location" />
+			<channel id="distanceCovered" typeId="distanceCovered" />
+			<channel id="mowerWorkTime" typeId="mowerWorkTime" />
+			<channel id="bladeWorkTime" typeId="bladeWorkTime" />
+			<channel id="batteryChargeCycles" typeId="batteryChargeCycles" />
+			<channel id="batteryTemperature" typeId="batteryTemperature" />
+			<channel id="batteryVoltage" typeId="batteryVoltage" />
+			<channel id="batteryPercentage" typeId="batteryPercentage" />
+			<channel id="batteryCharging" typeId="batteryCharging" />
+			<channel id="batteryState" typeId="batteryState" />
+			<channel id="messagesIn" typeId="messagesIn" />
+			<channel id="messagesOut" typeId="messagesOut" />
+			<channel id="pushNotifications" typeId="pushNotifications" />
+			<channel id="rsi" typeId="rsi" />
+			<channel id="statusCode" typeId="statusCode" />
+			<channel id="errorsCode" typeId="errorCode" />
 		</channels>
 
 		<config-description>
@@ -47,58 +53,108 @@
 
 	</thing-type>
 
-	<channel-type id="locked" advanced="false">
-		<item-type>Switch</item-type>
-		<label>Locked status</label>
-		<description>Indicates whether mower is locked or not</description>
-	</channel-type>
-
 	<channel-type id="distanceCovered" advanced="false">
 		<item-type>Number:Length</item-type>
 		<label>Distance covered</label>
 		<description>The distance the mower has covered</description>
-		<state pattern="%d %unit%" />
+		<state pattern="%d %unit%" readOnly="true" />
 	</channel-type>
 
 	<channel-type id="mowerWorkTime" advanced="false">
 		<item-type>Number:Time</item-type>
 		<label>Mower work time</label>
 		<description>The hours the mower has worked</description>
-		<state pattern="%d %unit%" />
+		<state pattern="%d %unit%" readOnly="true"/>
 	</channel-type>
 
 	<channel-type id="bladeWorkTime" advanced="false">
 		<item-type>Number:Time</item-type>
 		<label>Blade work time</label>
 		<description>The hours the blades have worked</description>
-		<state pattern="%d %unit%" />
+		<state pattern="%d %unit%" readOnly="true" />
 	</channel-type>
 
 	<channel-type id="batteryChargeCycles" advanced="false">
 		<item-type>Number:Dimensionless</item-type>
 		<label>Battery charging cycles</label>
 		<description>The battery charging cycles</description>
-		<state pattern="%d" />
+		<state pattern="%d" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="batteryTemperature" advanced="false">
+		<item-type>Number:Temperature</item-type>
+		<label>Battery temperature</label>
+		<description>The battery temperature</description>
+		<state pattern="%d %unit%" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="batteryVoltage" advanced="false">
+		<item-type>Number:ElectricPotential</item-type>
+		<label>Battery voltage</label>
+		<description>The battery voltage</description>
+		<state pattern="%d %unit%" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="batteryCharging" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Battery charging</label>
+		<description>Indicates whether battery is currently charging or not</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="batteryPercentage" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Battery percentage</label>
+		<description>The battery percentage</description>
+		<state pattern="%d" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="batteryState" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Battery state</label>
+		<description>The battery state</description>
+		<state pattern="%d" readOnly="true"/>
 	</channel-type>
 
 	<channel-type id="messagesIn" advanced="false">
 		<item-type>Number:Dimensionless</item-type>
 		<label>Messages In</label>
 		<description>The amount of messages received by the Worx cloud service</description>
-		<state pattern="%d" />
+		<state pattern="%d" readOnly="true"/>
 	</channel-type>
 
 	<channel-type id="messagesOut" advanced="false">
 		<item-type>Number:Dimensionless</item-type>
 		<label>Messages In</label>
 		<description>The amount of messages received by the Worx cloud service</description>
-		<state pattern="%d" />
+		<state pattern="%d" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="rsi" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Wifi strength</label>
+		<description>The wifi strength</description>
+		<state pattern="%d" readOnly="true"/>
 	</channel-type>
 
 	<channel-type id="pushNotifications" advanced="false">
 		<item-type>Switch</item-type>
 		<label>Push Notifications</label>
 		<description>Indicates whether push notifications are enabled or not</description>
+	</channel-type>
+
+	<channel-type id="statusCode" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Status code</label>
+		<description>The status code</description>
+		<state pattern="%d" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="errorCode" advanced="false">
+		<item-type>Number:Dimensionless</item-type>
+		<label>Error code</label>
+		<description>The error code</description>
+		<state pattern="%d" readOnly="true"/>
 	</channel-type>
 
 </thing:thing-descriptions>

@@ -1,5 +1,7 @@
 package org.openhab.binding.worxlandroid.internal.mqtt;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -11,7 +13,9 @@ import java.util.List;
  *          "tm":"14:08:58",
  *          "dt":"28/09/2019",
  *          "sc":{"m":1,"p":0,"d":
- *                     [["14:30",0,0],["14:30",45,1],["14:30",45,0],["14:30",45,0],["14:30",45,1],["14:30",45,0],["14:30",45,0]]},
+ *                     [
+ *                       ["14:30",0,0],["14:30",45,1],["14:30",45,0],["14:30",45,0],["14:30",45,1],["14:30",45,0],["14:30",45,0]
+ *                     ]},
  *          "cmd":0, "mz":[0,0,0,0],"mzv":[0,0,0,0,0,0,0,0,0,0],"rd":180,"sn":"xxx"
  *          },
  *      "dat":{
@@ -20,45 +24,49 @@ import java.util.List;
  *          "bt":
  *              {"t":25.5,"v":19.98,"p":100,"nr":881,"c":0,"m":0},
  *         "dmp":[-0.8,1.1,302.6],
- *         "st":{"b":10256,"d":184891, "wt":11320},
+ *         "st":
+ *              {"b":10256,"d":184891, "wt":11320},
  *         "ls":1,"le":0,"lz":0,"rsi":-62,"lk":0}}
  *
  *
  */
 public class MowerInfo {
-    MowerConfiguration cfg;
-    MowerData dat;
+    MowerConfiguration configuration;
+    MowerData data;
 
-    public class MowerConfiguration{
-        long id;
-        String lg;
-        String tm;
-        String dt;
-        MowerSchedule sc;
+    public MowerConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public MowerData getData() {
+        return data;
+    }
+
+    public static class MowerConfiguration{
+        long configId;
+        String language;
+        LocalDateTime dateTime;
+        MowerSchedule schedule;
         int cmd;
-        List<Integer> mz;
-        List<Integer> mzv;
-        int rd;
-        String sn;
+        List<Integer> mz;  // TODO: multizone
+        List<Integer> mzv; // TODO: multizone actual
+        Duration rainDelay;
+        String serialNumber;
 
-        public long getId() {
-            return id;
+        public long getConfigId() {
+            return configId;
         }
 
-        public String getLg() {
-            return lg;
+        public String getLanguage() {
+            return language;
         }
 
-        public String getTm() {
-            return tm;
+        public LocalDateTime getDateTime() {
+            return dateTime;
         }
 
-        public String getDt() {
-            return dt;
-        }
-
-        public MowerSchedule getSc() {
-            return sc;
+        public MowerSchedule getSchedule() {
+            return schedule;
         }
 
         public int getCmd() {
@@ -73,24 +81,24 @@ public class MowerInfo {
             return mzv;
         }
 
-        public int getRd() {
-            return rd;
+        public Duration getRainDelay() {
+            return rainDelay;
         }
 
-        public String getSn() {
-            return sn;
+        public String getSerialNumber() {
+            return serialNumber;
         }
     }
 
-    public class MowerData{
+    public static class MowerData{
         String mac;
-        String fw;
-        Battery bt;
-        List<Double> dmp;
-        State st;
-        int ls;
-        int le;
-        int lz;
+        String firmware;
+        Battery battery;
+        List<Double> dmp; // TODO: maybe position details?
+        Statistic statistic;
+        int status;
+        int error;
+        int currentZone;
         int rsi;
         int lk;
 
@@ -98,32 +106,32 @@ public class MowerInfo {
             return mac;
         }
 
-        public String getFw() {
-            return fw;
+        public String getFirmware() {
+            return firmware;
         }
 
-        public Battery getBt() {
-            return bt;
+        public Battery getBattery() {
+            return battery;
         }
 
         public List<Double> getDmp() {
             return dmp;
         }
 
-        public State getSt() {
-            return st;
+        public Statistic getStatistic() {
+            return statistic;
         }
 
-        public int getLs() {
-            return ls;
+        public int getStatus() {
+            return status;
         }
 
-        public int getLe() {
-            return le;
+        public int getError() {
+            return error;
         }
 
-        public int getLz() {
-            return lz;
+        public int getCurrentZone() {
+            return currentZone;
         }
 
         public int getRsi() {
@@ -136,75 +144,66 @@ public class MowerInfo {
     }
 
     public class MowerSchedule{
-        int m;
-        int p;
-        List<MowerStart> d;
+        boolean scheduleActive;
+        int mowTimeExtension;
+        List<MowerStart> mowerStarts;
     }
 
     public class MowerStart{
         String timeOfDay;
-        int duration;
+        Duration duration;
         boolean cutEdge;
     }
 
-    public class Battery{
-        double t;
-        double v;
-        int p;
-        long nr;
-        int c;
-        int m;
+    public static class Battery{
+        double temperature;
+        double voltage;
+        int percentage;
+        long chargeCycle;
+        boolean charging;
+        int state;
 
-        public double getT() {
-            return t;
+        public double getTemperature() {
+            return temperature;
         }
 
-        public double getV() {
-            return v;
+        public double getVoltage() {
+            return voltage;
         }
 
-        public int getP() {
-            return p;
+        public int getPercentage() {
+            return percentage;
         }
 
-        public long getNr() {
-            return nr;
+        public long getChargeCycle() {
+            return chargeCycle;
         }
 
-        public int getC() {
-            return c;
+        public boolean isCharging() {
+            return charging;
         }
 
-        public int getM() {
-            return m;
-        }
-    }
-
-    public class State{
-        long b;
-        long d;
-        long wt;
-
-        public long getB() {
-            return b;
-        }
-
-        public long getD() {
-            return d;
-        }
-
-        public long getWt() {
-            return wt;
+        public int getState() {
+            return state;
         }
     }
 
+    public static class Statistic{
+        Duration bladeWorkingTime;
+        long distance;
+        Duration workingTime;
 
-    public MowerConfiguration getCfg() {
-        return cfg;
-    }
+        public Duration getBladeWorkingTime() {
+            return bladeWorkingTime;
+        }
 
-    public MowerData getDat() {
-        return dat;
+        public long getDistance() {
+            return distance;
+        }
+
+        public Duration getWorkingTime() {
+            return workingTime;
+        }
     }
 
 }

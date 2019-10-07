@@ -13,6 +13,7 @@
 package org.openhab.binding.worxlandroid.internal.handler;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -21,20 +22,26 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.library.types.*;
+import org.eclipse.smarthome.core.library.unit.SIUnits;
+import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
 import org.eclipse.smarthome.core.thing.*;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.worxlandroid.internal.mqtt.MowerInfo;
+import org.openhab.binding.worxlandroid.internal.mqtt.MowerInfoDeserializer;
 import org.openhab.binding.worxlandroid.internal.mqtt.MqttConnection;
 import org.openhab.binding.worxlandroid.internal.restconnection.Mower;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.measure.quantity.Time;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.time.temporal.Temporal;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +62,7 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
     private @Nullable WorxLandroidAPIHandler bridge;
     private @NonNullByDefault({}) MqttConnection mqttConnection;
     private @NonNullByDefault({}) MowerInfo mower;
+    private final Gson gson;
 
     @Nullable
     private ScheduledFuture<?> refreshJob;
@@ -62,6 +70,9 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
 
     public WorxLandroidHandler(Thing thing) {
         super(thing);
+        this.gson = new GsonBuilder()
+                .registerTypeAdapter(MowerInfo.class, new MowerInfoDeserializer())
+                .create();
         initialize();
 
     }
@@ -92,7 +103,7 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (CHANNEL_1.equals(channelUID.getId())) {
+        if (RSI.equals(channelUID.getId())) {
             if (command instanceof RefreshType) {
                 // TODO: handle data refresh
             }
@@ -168,14 +179,30 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
 
     @Override
     public void messageArrived(@Nullable String s, @Nullable MqttMessage mqttMessage) {
-        logger.debug("On topic {} received message {}",s,mqttMessage);
+        logger.debug("On topic {} received message {}",s,mqttMessage.toString());
         try {
-            mower = new Gson().fromJson(mqttMessage.getPayload().toString(), MowerInfo.class);
+
+            mower = gson.fromJson(mqttMessage.toString(), MowerInfo.class);
         }catch(JsonSyntaxException |IllegalStateException e){
             logger.error("Error while serializing object:", e);
         }
-        logger.debug("Parsed object serial number: {}",mower.getCfg().getSn());
-        logger.debug("Parsed object RSI: {}",mower.getDat().getRsi());
+
+        logger.debug("Parsed object serial number: {}",mower.getConfiguration().getSerialNumber());
+
+        logger.debug("Parsed object RSI: {}",mower.getData().getRsi());
+        updateState(RSI, new DecimalType(mower.getData().getRsi()));
+        logger.debug("Parsed object Battery temperature: {}",mower.getData().getBattery().getTemperature());
+        updateState(BATTERY_TEMPERATURE, new QuantityType<>(mower.getData().getBattery().getTemperature(),SIUnits.CELSIUS));
+        updateState(DISTANCE_COVERED, new QuantityType<>(mower.getData().getStatistic().getDistance(),SIUnits.METRE));
+        updateState(MOWER_WORKING_TIME, new QuantityType<>(mower.getData().getStatistic().getWorkingTime().toHours(), SmartHomeUnits.HOUR));
+        updateState(BLADE_WORKING_TIME, new QuantityType<>(mower.getData().getStatistic().getBladeWorkingTime().toHours(), SmartHomeUnits.HOUR));
+        updateState(BATTERY_CHARGE_CYCLES, new DecimalType(mower.getData().getBattery().getChargeCycle()));
+        updateState(BATTERY_VOLTAGE, new QuantityType<>(mower.getData().getBattery().getVoltage(),SmartHomeUnits.VOLT));
+        updateState(BATTERY_PERCENTAGE,new DecimalType(mower.getData().getBattery().getPercentage()));
+        updateState(BATTERY_CHARGING, OnOffType.from(mower.getData().getBattery().isCharging()));
+        updateState(BATTERY_STATE, new DecimalType(mower.getData().getBattery().getState()));
+        updateState(STATUS_CODE, new DecimalType(mower.getData().getStatus()));
+        updateState(ERROR_CODE,new DecimalType(mower.getData().getError()));
     }
 
     @Override

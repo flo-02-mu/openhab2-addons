@@ -44,6 +44,22 @@ public class WorxLandroidBindingConstants {
     public static final ThingTypeUID THING_TYPE_MOWER = new ThingTypeUID(BINDING_ID, "mower");
 
     // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
+
+    public static final String LOCKED = "locked";
+    public static final String DISTANCE_COVERED = "distanceCovered";
+    public static final String MOWER_WORKING_TIME = "mowerWorkTime";
+    public static final String BLADE_WORKING_TIME = "bladeWorkTime";
+    public static final String BATTERY_TEMPERATURE = "batteryTemperature";
+    public static final String BATTERY_CHARGE_CYCLES = "batteryChargeCycles";
+    public static final String BATTERY_VOLTAGE = "batteryVoltage";
+    public static final String BATTERY_PERCENTAGE = "batteryPercentage";
+    public static final String BATTERY_CHARGING = "batteryCharging";
+    public static final String BATTERY_STATE = "batteryState";
+    public static final String MESSAGES_IN = "messagesIn";
+    public static final String MESSAGES_OUT = "messagesOut";
+    public static final String PUSH_NOTIFICATIONS = "pushNotifications";
+    public static final String RSI = "rsi";
+    public static final String STATUS_CODE = "statusCode";
+    public static final String ERROR_CODE = "errorCode";
 
 }
