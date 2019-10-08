@@ -5,7 +5,6 @@ import com.google.gson.*;
 import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class MowerInfoDeserializer implements JsonDeserializer<MowerInfo> {
@@ -20,7 +19,7 @@ public class MowerInfoDeserializer implements JsonDeserializer<MowerInfo> {
         mowerInfo.configuration.language = cfg.get("lg").getAsString();;
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        ZonedDateTime dateTime = ZonedDateTime.parse(cfg.get("dt").getAsString()+ " "+cfg.get("tm").getAsString(),formatter);
+        LocalDateTime dateTime = LocalDateTime.parse(cfg.get("dt").getAsString()+ " "+cfg.get("tm").getAsString(),formatter);
         mowerInfo.configuration.dateTime = dateTime;
 
         MowerInfo.MowerSchedule schedule;

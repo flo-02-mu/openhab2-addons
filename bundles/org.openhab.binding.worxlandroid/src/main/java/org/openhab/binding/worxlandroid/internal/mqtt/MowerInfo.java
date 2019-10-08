@@ -2,7 +2,6 @@ package org.openhab.binding.worxlandroid.internal.mqtt;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -46,7 +45,7 @@ public class MowerInfo {
     public static class MowerConfiguration{
         long configId;
         String language;
-        ZonedDateTime dateTime;
+        LocalDateTime dateTime;
         MowerSchedule schedule;
         int cmd;
         List<Integer> mz;  // TODO: multizone
@@ -62,7 +61,7 @@ public class MowerInfo {
             return language;
         }
 
-        public ZonedDateTime getDateTime() {
+        public LocalDateTime getDateTime() {
             return dateTime;
         }
 

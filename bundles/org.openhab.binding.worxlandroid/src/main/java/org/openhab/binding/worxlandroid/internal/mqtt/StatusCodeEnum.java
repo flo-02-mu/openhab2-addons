@@ -24,7 +24,7 @@ public enum StatusCodeEnum {
 
     private Integer id;
 
-    StatusCodeEnum(int key){
+    StatusCodeEnum(int id){
         this.id = id;
     }
 

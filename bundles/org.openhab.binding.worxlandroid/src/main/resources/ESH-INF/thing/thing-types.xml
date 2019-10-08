@@ -28,7 +28,9 @@
 			<channel id="pushNotifications" typeId="pushNotifications" />
 			<channel id="rsi" typeId="rsi" />
 			<channel id="statusCode" typeId="statusCode" />
-			<channel id="errorsCode" typeId="errorCode" />
+            <channel id="statusDescription" typeId="statusDescription" />
+			<channel id="errorCode" typeId="errorCode" />
+            <channel id="errorDescription" typeId="errorDescription" />
 			<channel id="lastUpdate" typeId="lastUpdate" />
 			<channel id="mowerCommand" typeId="mowerCommand"/>
 		</channels>
@@ -146,11 +148,18 @@
 	</channel-type>
 
 	<channel-type id="statusCode" advanced="false">
-		<item-type>String:Dimensionless</item-type>
+		<item-type>Number:Dimensionless</item-type>
 		<label>Status code</label>
 		<description>The status code</description>
 		<state pattern="%d" readOnly="true"/>
 	</channel-type>
+
+    <channel-type id="errorCode" advanced="false">
+        <item-type>Number:Dimensionless</item-type>
+        <label>Error code</label>
+        <description>The status code</description>
+        <state pattern="%d" readOnly="true"/>
+    </channel-type>
 
 	<channel-type id="statusDescription" advanced="false">
 		<item-type>String</item-type>
@@ -177,12 +186,14 @@
 		<item-type>String</item-type>
 		<label>Mower Command</label>
 		<description>Send a start/stop/go home/zone training command to the mower</description>
-		<options>
-			<option value="START">Start</option>
-			<option value="PAUSE">Pause</option>
-			<option value="GO_HOME">Go home</option>
-			<option value="ZONE_TRAINING">Zone training</option>
-		</options>
+        <state>
+            <options>
+                <option value="START">Start</option>
+                <option value="PAUSE">Pause</option>
+                <option value="GO_HOME">Go home</option>
+                <option value="ZONE_TRAINING">Zone training</option>
+            </options>
+        </state>
 	</channel-type>
 
 </thing:thing-descriptions>
