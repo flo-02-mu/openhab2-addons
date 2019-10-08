@@ -4,6 +4,7 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidHandler;
 import org.slf4j.Logger;
@@ -14,7 +15,7 @@ import java.security.*;
 
 public class MqttConnection {
 
-    private final Logger logger = LoggerFactory.getLogger(WorxLandroidHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(MqttConnection.class);
     private final String client = "android-12345"; //TODO: UUID
 
     private final String topicOut;
@@ -46,6 +47,10 @@ public class MqttConnection {
         mqttClient.setCallback(mqttCallback);
         logger.debug("Subscribing to topic {}",topicOut);
         mqttClient.subscribe(topicOut);
+    }
+
+    public void sendMessage(String message) throws MqttException {
+        mqttClient.publish(topicIn,new MqttMessage(message.getBytes()));
     }
 
     public void stop() throws MqttException {

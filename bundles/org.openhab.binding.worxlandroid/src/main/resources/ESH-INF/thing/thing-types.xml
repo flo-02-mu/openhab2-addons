@@ -29,6 +29,8 @@
 			<channel id="rsi" typeId="rsi" />
 			<channel id="statusCode" typeId="statusCode" />
 			<channel id="errorsCode" typeId="errorCode" />
+			<channel id="lastUpdate" typeId="lastUpdate" />
+			<channel id="mowerCommand" typeId="mowerCommand"/>
 		</channels>
 
 		<config-description>
@@ -144,17 +146,43 @@
 	</channel-type>
 
 	<channel-type id="statusCode" advanced="false">
-		<item-type>Number:Dimensionless</item-type>
+		<item-type>String:Dimensionless</item-type>
 		<label>Status code</label>
 		<description>The status code</description>
 		<state pattern="%d" readOnly="true"/>
 	</channel-type>
 
-	<channel-type id="errorCode" advanced="false">
-		<item-type>Number:Dimensionless</item-type>
-		<label>Error code</label>
-		<description>The error code</description>
-		<state pattern="%d" readOnly="true"/>
+	<channel-type id="statusDescription" advanced="false">
+		<item-type>String</item-type>
+		<label>Status description</label>
+		<description>The status description</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="errorDescription" advanced="false">
+		<item-type>String</item-type>
+		<label>Error description</label>
+		<description>The error description</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="lastUpdate" advanced="false">
+		<item-type>DateTime</item-type>
+		<label>Last Update</label>
+		<description>The timestamp of the last update of all channels</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="mowerCommand" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower Command</label>
+		<description>Send a start/stop/go home/zone training command to the mower</description>
+		<options>
+			<option value="START">Start</option>
+			<option value="PAUSE">Pause</option>
+			<option value="GO_HOME">Go home</option>
+			<option value="ZONE_TRAINING">Zone training</option>
+		</options>
 	</channel-type>
 
 </thing:thing-descriptions>

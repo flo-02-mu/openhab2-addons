@@ -60,6 +60,10 @@ public class WorxLandroidBindingConstants {
     public static final String PUSH_NOTIFICATIONS = "pushNotifications";
     public static final String RSI = "rsi";
     public static final String STATUS_CODE = "statusCode";
+    public static final String STATUS_DESCRIPTION = "statusDescription";
     public static final String ERROR_CODE = "errorCode";
+    public static final String ERROR_DESCRIPTION = "errorDescription";
+    public static final String LAST_UPDATE = "lastUpdate";
+    public static final String MOWER_COMMAND = "mowerCommand";
 
 }

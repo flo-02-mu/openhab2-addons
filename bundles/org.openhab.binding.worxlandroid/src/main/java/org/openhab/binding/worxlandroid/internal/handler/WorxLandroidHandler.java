@@ -12,9 +12,13 @@
  */
 package org.openhab.binding.worxlandroid.internal.handler;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonSyntaxException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -22,30 +26,53 @@ import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.smarthome.config.core.Configuration;
-import org.eclipse.smarthome.core.library.types.*;
+import org.eclipse.smarthome.core.library.types.DateTimeType;
+import org.eclipse.smarthome.core.library.types.DecimalType;
+import org.eclipse.smarthome.core.library.types.OnOffType;
+import org.eclipse.smarthome.core.library.types.QuantityType;
+import org.eclipse.smarthome.core.library.types.StringType;
 import org.eclipse.smarthome.core.library.unit.SIUnits;
 import org.eclipse.smarthome.core.library.unit.SmartHomeUnits;
-import org.eclipse.smarthome.core.thing.*;
+import org.eclipse.smarthome.core.thing.ChannelUID;
+import org.eclipse.smarthome.core.thing.Thing;
+import org.eclipse.smarthome.core.thing.ThingStatus;
+import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.worxlandroid.internal.mqtt.ErrorCodeEnum;
+import org.openhab.binding.worxlandroid.internal.mqtt.MowerCommandEnum;
 import org.openhab.binding.worxlandroid.internal.mqtt.MowerInfo;
 import org.openhab.binding.worxlandroid.internal.mqtt.MowerInfoDeserializer;
 import org.openhab.binding.worxlandroid.internal.mqtt.MqttConnection;
+import org.openhab.binding.worxlandroid.internal.mqtt.StatusCodeEnum;
 import org.openhab.binding.worxlandroid.internal.restconnection.Mower;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.measure.quantity.Time;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.time.temporal.Temporal;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.*;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_CHARGE_CYCLES;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_CHARGING;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_PERCENTAGE;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_STATE;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_TEMPERATURE;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_VOLTAGE;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BLADE_WORKING_TIME;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.DISTANCE_COVERED;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.ERROR_CODE;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.ERROR_DESCRIPTION;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.LAST_UPDATE;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.MOWER_COMMAND;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.MOWER_WORKING_TIME;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.RSI;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.SERIAL_NUMBER;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.STATUS_CODE;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.STATUS_DESCRIPTION;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.TOPIC_COMMAND_IN;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.TOPIC_COMMAND_OUT;
 
 /**
  * The {@link WorxLandroidHandler} is responsible for handling commands, which are
@@ -103,17 +130,16 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (RSI.equals(channelUID.getId())) {
+        if (MOWER_COMMAND.equals(channelUID.getId())) {
             if (command instanceof RefreshType) {
-                // TODO: handle data refresh
+                logger.error("Channel {} does not support any commands", channelUID);
             }
-
-            // TODO: handle command
-
-            // Note: if communication with thing fails for some reason,
-            // indicate that by setting the status with detail information:
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-            // "Could not control device at IP address x.x.x.x");
+            try {
+                String message = "{\"cmd\":\""+ MowerCommandEnum.valueOf(command.toString()).id+"\"}";
+                mqttConnection.sendMessage(message);
+            } catch (MqttException e) {
+                logger.error("Error while updating channel {}",channelUID);
+            }
         }
     }
 
@@ -202,7 +228,10 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
         updateState(BATTERY_CHARGING, OnOffType.from(mower.getData().getBattery().isCharging()));
         updateState(BATTERY_STATE, new DecimalType(mower.getData().getBattery().getState()));
         updateState(STATUS_CODE, new DecimalType(mower.getData().getStatus()));
+        updateState(STATUS_DESCRIPTION, new StringType(StatusCodeEnum.getById(mower.getData().getStatus()).toString()));
         updateState(ERROR_CODE,new DecimalType(mower.getData().getError()));
+        updateState(ERROR_DESCRIPTION,new StringType(ErrorCodeEnum.getById(mower.getData().getError()).toString()));
+        updateState(LAST_UPDATE,new DateTimeType(mower.getConfiguration().getDateTime()));
     }
 
     @Override
