@@ -1,28 +1,33 @@
 package org.openhab.binding.worxlandroid.internal.mqtt;
 
-import com.google.gson.*;
-
 import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 public class MowerInfoDeserializer implements JsonDeserializer<MowerInfo> {
 
     @Override
-    public MowerInfo deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+    public MowerInfo deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         MowerInfo mowerInfo = new MowerInfo();
         JsonObject cfg = jsonObject.get("cfg").getAsJsonObject();
         mowerInfo.configuration = new MowerInfo.MowerConfiguration();
         mowerInfo.configuration.configId = cfg.get("id").getAsLong();
-        mowerInfo.configuration.language = cfg.get("lg").getAsString();;
+        mowerInfo.configuration.language = cfg.get("lg").getAsString();
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         LocalDateTime dateTime = LocalDateTime.parse(cfg.get("dt").getAsString()+ " "+cfg.get("tm").getAsString(),formatter);
         mowerInfo.configuration.dateTime = dateTime;
 
-        MowerInfo.MowerSchedule schedule;
+        mowerInfo.configuration.schedule = new MowerInfo.MowerSchedule();
+        mowerInfo.configuration.schedule.mowTimeExtension = cfg.get("sc").getAsJsonObject().get("p").getAsInt();
+        mowerInfo.configuration.schedule.scheduleActive = cfg.get("sc").getAsJsonObject().get("m").getAsBoolean();
         mowerInfo.configuration.cmd = cfg.get("id").getAsInt();
         // TODO: multizone mz
         // TODO: multizone actual mzv

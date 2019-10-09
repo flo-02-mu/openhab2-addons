@@ -1,22 +1,25 @@
 package org.openhab.binding.worxlandroid.internal.mqtt;
 
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import javax.net.SocketFactory;
+
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.net.SocketFactory;
-import java.security.*;
 
 public class MqttConnection {
 
     private final Logger logger = LoggerFactory.getLogger(MqttConnection.class);
-    private final String client = "android-12345"; //TODO: UUID
+    private static final String CLIENT = "android-12345"; //TODO: UUID
 
     private final String topicOut;
     private final String topicIn;
@@ -30,7 +33,7 @@ public class MqttConnection {
         this.topicIn = topicIn;
         this.topicOut = topicOut;
         this.url = "ssl://"+url;
-        this.mqttClient = new MqttClient(this.url,client,new MemoryPersistence());
+        this.mqttClient = new MqttClient(this.url, CLIENT, new MemoryPersistence());
     }
 
     public void start(MqttCallback mqttCallback) throws MqttException, UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
@@ -39,7 +42,6 @@ public class MqttConnection {
 
         MqttConnectOptions mqttConnectOptions = new MqttConnectOptions();
         mqttConnectOptions.setCleanSession(true);
-        //mqttConnectOptions.setAutomaticReconnect(true);
         mqttConnectOptions.setSocketFactory(socketFactory);
 
         mqttClient.connect(mqttConnectOptions);

@@ -143,7 +143,7 @@ public class MowerInfo {
         }
     }
 
-    public class MowerSchedule{
+    public static class MowerSchedule {
         boolean scheduleActive;
         int mowTimeExtension;
         List<MowerStart> mowerStarts;

@@ -24,6 +24,8 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 @NonNullByDefault
 public class WorxLandroidBindingConstants {
 
+    private WorxLandroidBindingConstants() {
+    }
     private static final String BINDING_ID = "worxlandroid";
 
     // Config parameter
