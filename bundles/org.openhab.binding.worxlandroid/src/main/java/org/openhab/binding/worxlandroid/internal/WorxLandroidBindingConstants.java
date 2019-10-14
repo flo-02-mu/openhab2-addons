@@ -24,6 +24,8 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 @NonNullByDefault
 public class WorxLandroidBindingConstants {
 
+
+
     private WorxLandroidBindingConstants() {
     }
     private static final String BINDING_ID = "worxlandroid";
@@ -47,6 +49,10 @@ public class WorxLandroidBindingConstants {
 
     // List of all Channel ids
 
+    public static final String BATTERY_GROUP = "battery";
+    public static final String SCHEDULE_GROUP = "mowerSchedule";
+    public static final String STATISTICS = "statistics";
+    public static final String OTHER = "other";
     public static final String LOCKED = "locked";
     public static final String DISTANCE_COVERED = "distanceCovered";
     public static final String MOWER_WORKING_TIME = "mowerWorkTime";
@@ -67,5 +73,26 @@ public class WorxLandroidBindingConstants {
     public static final String ERROR_DESCRIPTION = "errorDescription";
     public static final String LAST_UPDATE = "lastUpdate";
     public static final String MOWER_COMMAND = "mowerCommand";
+    public static final String START_TIME_MONDAY = "startTimeMonday";
+    public static final String DURATION_MONDAY = "durationMonday";
+    public static final String CUT_EDGE_MONDAY = "cutEdgeMonday";
+    public static final String START_TIME_TUESDAY = "startTimeTuesday";
+    public static final String DURATION_TUESDAY = "durationTuesday";
+    public static final String CUT_EDGE_TUESDAY = "cutEdgeTuesday";
+    public static final String START_TIME_WEDNESDAY = "startTimeWednesday";
+    public static final String DURATION_WEDNESDAY = "durationWednesday";
+    public static final String CUT_EDGE_WEDNESDAY = "cutEdgeWednesday";
+    public static final String START_TIME_THURSDAY = "startTimeThursday";
+    public static final String DURATION_THURSDAY = "durationThursday";
+    public static final String CUT_EDGE_THURSDAY = "cutEdgeThursday";
+    public static final String START_TIME_FRIDAY = "startTimeFriday";
+    public static final String DURATION_FRIDAY = "durationFriday";
+    public static final String CUT_EDGE_FRIDAY = "cutEdgeFriday";
+    public static final String START_TIME_SATURDAY = "startTimeSaturday";
+    public static final String DURATION_SATURDAY = "durationSaturday";
+    public static final String CUT_EDGE_SATURDAY = "cutEdgeSaturday";
+    public static final String START_TIME_SUNDAY = "startTimeSunday";
+    public static final String DURATION_SUNDAY = "durationSunday";
+    public static final String CUT_EDGE_SUNDAY = "cutEdgeSunday";
 
 }

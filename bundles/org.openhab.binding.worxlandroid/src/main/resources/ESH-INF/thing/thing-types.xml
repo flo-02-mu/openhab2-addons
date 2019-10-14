@@ -13,27 +13,12 @@
 		<label>Mower</label>
 		<description>Mower</description>
 
-		<channels>
-			<channel id="distanceCovered" typeId="distanceCovered" />
-			<channel id="mowerWorkTime" typeId="mowerWorkTime" />
-			<channel id="bladeWorkTime" typeId="bladeWorkTime" />
-			<channel id="batteryChargeCycles" typeId="batteryChargeCycles" />
-			<channel id="batteryTemperature" typeId="batteryTemperature" />
-			<channel id="batteryVoltage" typeId="batteryVoltage" />
-			<channel id="batteryPercentage" typeId="batteryPercentage" />
-			<channel id="batteryCharging" typeId="batteryCharging" />
-			<channel id="batteryState" typeId="batteryState" />
-			<channel id="messagesIn" typeId="messagesIn" />
-			<channel id="messagesOut" typeId="messagesOut" />
-			<channel id="pushNotifications" typeId="pushNotifications" />
-			<channel id="rsi" typeId="rsi" />
-			<channel id="statusCode" typeId="statusCode" />
-            <channel id="statusDescription" typeId="statusDescription" />
-			<channel id="errorCode" typeId="errorCode" />
-            <channel id="errorDescription" typeId="errorDescription" />
-			<channel id="lastUpdate" typeId="lastUpdate" />
-			<channel id="mowerCommand" typeId="mowerCommand"/>
-		</channels>
+		<channel-groups>
+			<channel-group typeId="mowerSchedule" id="mowerSchedule" />
+			<channel-group typeId="battery" id="battery" />
+			<channel-group typeId="statistics" id="statistics" />
+			<channel-group typeId="other" id="other" />
+		</channel-groups>
 
 		<config-description>
 			<parameter name="mac" type="text" required="true">
@@ -54,8 +39,71 @@
 			</parameter>
 		</config-description>
 
-
 	</thing-type>
+
+	<channel-group-type id="mowerSchedule">
+		<label>Mower Schedule</label>
+		<channels>
+			<channel id="startTimeMonday" typeId="startTimeMonday" />
+			<channel id="durationMonday" typeId="durationMonday" />
+			<channel id="cutEdgeMonday" typeId="cutEdgeMonday" />
+			<channel id="startTimeTuesday" typeId="startTimeTuesday" />
+			<channel id="durationTuesday" typeId="durationTuesday" />
+			<channel id="cutEdgeTuesday" typeId="cutEdgeTuesday" />
+			<channel id="startTimeWednesday" typeId="startTimeWednesday" />
+			<channel id="durationWednesday" typeId="durationWednesday" />
+			<channel id="cutEdgeWednesday" typeId="cutEdgeWednesday" />
+			<channel id="startTimeThursday" typeId="startTimeThursday" />
+			<channel id="durationThursday" typeId="durationThursday" />
+			<channel id="cutEdgeThursday" typeId="cutEdgeThursday" />
+			<channel id="startTimeFriday" typeId="startTimeFriday" />
+			<channel id="durationFriday" typeId="durationFriday" />
+			<channel id="cutEdgeFriday" typeId="cutEdgeFriday" />
+			<channel id="startTimeSaturday" typeId="startTimeSaturday" />
+			<channel id="durationSaturday" typeId="durationSaturday" />
+			<channel id="cutEdgeSaturday" typeId="cutEdgeSaturday" />
+			<channel id="startTimeSunday" typeId="startTimeSunday" />
+			<channel id="durationSunday" typeId="durationSunday" />
+			<channel id="cutEdgeSunday" typeId="cutEdgeSunday" />
+		</channels>
+	</channel-group-type>
+
+	<channel-group-type id="battery">
+		<label>Mower Battery</label>
+		<channels>
+			<channel id="batteryChargeCycles" typeId="batteryChargeCycles" />
+			<channel id="batteryTemperature" typeId="batteryTemperature" />
+			<channel id="batteryVoltage" typeId="batteryVoltage" />
+			<channel id="batteryPercentage" typeId="batteryPercentage" />
+			<channel id="batteryCharging" typeId="batteryCharging" />
+			<channel id="batteryState" typeId="batteryState" />
+		</channels>
+	</channel-group-type>
+
+	<channel-group-type id="statistics">
+		<label>Mower Statistics</label>
+		<channels>
+			<channel id="distanceCovered" typeId="distanceCovered" />
+			<channel id="mowerWorkTime" typeId="mowerWorkTime" />
+			<channel id="bladeWorkTime" typeId="bladeWorkTime" />
+		</channels>
+	</channel-group-type>
+
+	<channel-group-type id="other">
+		<label>Other</label>
+		<channels>
+			<channel id="messagesIn" typeId="messagesIn" />
+			<channel id="messagesOut" typeId="messagesOut" />
+			<channel id="pushNotifications" typeId="pushNotifications" />
+			<channel id="rsi" typeId="rsi" />
+			<channel id="statusCode" typeId="statusCode" />
+			<channel id="statusDescription" typeId="statusDescription" />
+			<channel id="errorCode" typeId="errorCode" />
+			<channel id="errorDescription" typeId="errorDescription" />
+			<channel id="lastUpdate" typeId="lastUpdate" />
+			<channel id="mowerCommand" typeId="mowerCommand"/>
+		</channels>
+	</channel-group-type>
 
 	<channel-type id="distanceCovered" advanced="false">
 		<item-type>Number:Length</item-type>
@@ -194,6 +242,135 @@
                 <option value="ZONE_TRAINING">Zone training</option>
             </options>
         </state>
+	</channel-type>
+
+	<channel-type id="startTimeMonday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower start Monday</label>
+		<description>The mower starting time for Monday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="startTimeTuesday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower start Tuesday</label>
+		<description>The mower starting time for Tuesday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="startTimeWednesday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower start Wednesday</label>
+		<description>The mower starting time for Wednesday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="startTimeThursday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower start Thursday</label>
+		<description>The mower starting time for Thursday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="startTimeFriday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower start Friday</label>
+		<description>The mower starting time for Friday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="startTimeSaturday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower start Saturday</label>
+		<description>The mower starting time for Saturday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="startTimeSunday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mower start Sunday</label>
+		<description>The mower starting time for Sunday</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="durationMonday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mowing duration Monday</label>
+		<description>The mowing duration time for Monday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="durationTuesday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mowing duration Tuesday</label>
+		<description>The mowing duration time for Tuesday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="durationWednesday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mowing duration Wednesday</label>
+		<description>The mowing duration time for Wednesday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="durationThursday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mowing duration Thursday</label>
+		<description>The mowing duration time for Thursday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="durationFriday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mowing duration Friday</label>
+		<description>The mowing duration time for Friday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="durationSaturday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mowing duration Saturday</label>
+		<description>The mowing duration time for Saturday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="durationSunday" advanced="false">
+		<item-type>String</item-type>
+		<label>Mowing duration Sunday</label>
+		<description>The mowing duration time for Sunday</description>
+		<state readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="cutEdgeMonday" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Edge cut Monday</label>
+		<description>Cut the edge on Monday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="cutEdgeTuesday" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Edge cut Tuesday</label>
+		<description>Cut the edge on Tuesday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="cutEdgeWednesday" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Edge cut Wednesday</label>
+		<description>Cut the edge on Wednesday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="cutEdgeThursday" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Edge cut Thursday</label>
+		<description>Cut the edge on Thursday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="cutEdgeFriday" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Edge cut Friday</label>
+		<description>Cut the edge on Friday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="cutEdgeSaturday" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Edge cut Saturday</label>
+		<description>Cut the edge on Saturday</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="cutEdgeSunday" advanced="false">
+		<item-type>Switch</item-type>
+		<label>Edge cut Sunday</label>
+		<description>Cut the edge on Sunday</description>
+		<state readOnly="true"/>
 	</channel-type>
 
 </thing:thing-descriptions>

@@ -82,4 +82,14 @@ public class WorxLandroidHandlerFactory extends BaseThingHandlerFactory {
 
         return null;
     }
+
+    @Override
+    protected synchronized void removeHandler(ThingHandler thingHandler) {
+        if (thingHandler instanceof WorxLandroidAPIHandler) {
+            ServiceRegistration<?> serviceReg = this.discoveryServiceRegs.remove(thingHandler.getThing().getUID());
+            if (serviceReg != null) {
+                serviceReg.unregister();
+            }
+        }
+    }
 }

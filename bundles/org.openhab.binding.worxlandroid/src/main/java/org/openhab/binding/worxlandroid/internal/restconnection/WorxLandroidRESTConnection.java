@@ -6,6 +6,7 @@ import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpHeader;
+import org.openhab.binding.worxlandroid.internal.WorxLandroidException;
 import org.openhab.binding.worxlandroid.internal.handler.WorxLandroidAPIHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -199,7 +200,7 @@ public class WorxLandroidRESTConnection {
         return null;
     }
 
-    public Mower getMowerStatus(String serialNumber){
+    public Mower getMowerStatus(String serialNumber) throws WorxLandroidException {
 
         Request request = httpClient.newRequest(PRODUCT_ITEMS_ENDPOINT+"/"+serialNumber);
         request.method(HttpMethod.GET);
@@ -221,22 +222,22 @@ public class WorxLandroidRESTConnection {
                     case UNAUTHORIZED_401:
                     case NOT_FOUND_404:
                         errorMessage = content;
-                        logger.debug("Worx server responded with status code {}: {}", httpStatus, errorMessage);
+                        logger.error("Worx server responded with status code {}: {}", httpStatus, errorMessage);
                         //throw new WorxLandroidConfigurationException(errorMessage);
                     case TOO_MANY_REQUESTS_429:
                     default:
                         errorMessage = content;
-                        logger.debug("Worx server responded with status code {}: {}", httpStatus, errorMessage);
-                        //throw new WorxLandroidCommunicationException(errorMessage);
+                        logger.error("Worx server responded with status code {}: {}", httpStatus, errorMessage);
+                        throw new WorxLandroidException(errorMessage);
                 }
             } catch (InterruptedException | TimeoutException | ExecutionException e) {
                 logger.error("Error while retrieving keystore: ",e);
+                throw new WorxLandroidException(e.getMessage());
             }
         }else{
             logger.error("No authentication header available!");
             return null;
         }
-        return null;
     }
 
 

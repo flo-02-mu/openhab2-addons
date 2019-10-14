@@ -6,7 +6,7 @@ import java.util.Map;
 public enum MowerCommandEnum {
 
     UNKNOWN(0),
-    START_MOWING(1),
+    START(1),
     PAUSE(2),
     SEND_HOME(3),
     START_ZONE_TRAINING(4);

@@ -1,16 +1,21 @@
 package org.openhab.binding.worxlandroid.internal.mqtt;
 
+import com.google.gson.*;
+import org.openhab.binding.worxlandroid.internal.restconnection.WorxLandroidRESTConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.lang.reflect.Type;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import java.util.ArrayList;
 
 public class MowerInfoDeserializer implements JsonDeserializer<MowerInfo> {
+
+    private final Logger logger = LoggerFactory.getLogger(MowerInfoDeserializer.class);
+
 
     @Override
     public MowerInfo deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
@@ -28,6 +33,23 @@ public class MowerInfoDeserializer implements JsonDeserializer<MowerInfo> {
         mowerInfo.configuration.schedule = new MowerInfo.MowerSchedule();
         mowerInfo.configuration.schedule.mowTimeExtension = cfg.get("sc").getAsJsonObject().get("p").getAsInt();
         mowerInfo.configuration.schedule.scheduleActive = cfg.get("sc").getAsJsonObject().get("m").getAsBoolean();
+        mowerInfo.configuration.schedule.mowerStarts = new ArrayList<>();
+        //[
+        // *                       ["14:30",0,0],["14:30",45,1],["14:30",45,0],["14:30",45,0],["14:30",45,1],["14:30",45,0],["14:30",45,0]
+        // *                     ]
+        JsonArray d = cfg.get("sc").getAsJsonObject().get("d").getAsJsonArray();
+        for(DayOfWeek day : DayOfWeek.values()){
+            JsonArray configForDay = d.get(day.getValue()-1).getAsJsonArray();
+            logger.debug("Mower duration as int: {}",configForDay.get(1).getAsInt());
+            logger.debug("Mower duration as long: {}",configForDay.get(1).getAsLong());
+
+            mowerInfo.configuration.schedule.mowerStarts.add(
+                    new MowerInfo.MowerStart(
+                            configForDay.get(0).getAsString(),
+                            Duration.ofMinutes(configForDay.get(1).getAsInt()),
+                            configForDay.get(2).getAsBoolean()));
+        }
+
         mowerInfo.configuration.cmd = cfg.get("id").getAsInt();
         // TODO: multizone mz
         // TODO: multizone actual mzv

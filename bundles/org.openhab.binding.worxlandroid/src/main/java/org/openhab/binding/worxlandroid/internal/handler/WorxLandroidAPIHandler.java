@@ -2,16 +2,13 @@ package org.openhab.binding.worxlandroid.internal.handler;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.smarthome.config.core.Configuration;
 import org.eclipse.smarthome.core.thing.*;
 import org.eclipse.smarthome.core.thing.binding.BaseBridgeHandler;
 import org.eclipse.smarthome.core.types.Command;
-import org.eclipse.smarthome.io.net.http.HttpClientFactory;
 import org.openhab.binding.worxlandroid.internal.restconnection.UserResponse;
 import org.openhab.binding.worxlandroid.internal.restconnection.WorxLandroidRESTConnection;
-import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,15 +25,11 @@ public class WorxLandroidAPIHandler extends BaseBridgeHandler {
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Collections.singleton(THING_TYPE_WORX_LANDROID_API);
 
-    //private final HttpClient httpClient;
-
     public WorxLandroidRESTConnection getWorxLandroidRESTConnection() {
         return worxLandroidRESTConnection;
     }
 
     private @NonNullByDefault({}) WorxLandroidRESTConnection worxLandroidRESTConnection;
-
-    private @NonNullByDefault({}) HttpClient httpClient;
 
     Configuration config;
 
@@ -51,7 +44,6 @@ public class WorxLandroidAPIHandler extends BaseBridgeHandler {
 
     public WorxLandroidAPIHandler(Bridge bridge, HttpClient httpClient) {
         super(bridge);
-        this.httpClient = httpClient;
 
         logger.debug("Initialize WorxLandroidAccountHandler '{}'.", getThing().getUID());
         config = getConfig();
@@ -92,7 +84,11 @@ public class WorxLandroidAPIHandler extends BaseBridgeHandler {
     }
 
     @Override
-    public void handleCommand(ChannelUID channelUID, Command command) {
+    public void handleCommand(ChannelUID channelUID, Command command) { }
+
+    @Override
+    public void dispose() {
+        logger.debug("Disposing bridge {}", thing);
 
     }
 

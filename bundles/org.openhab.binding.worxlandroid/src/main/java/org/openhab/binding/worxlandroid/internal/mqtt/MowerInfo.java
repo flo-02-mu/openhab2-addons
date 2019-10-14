@@ -147,12 +147,42 @@ public class MowerInfo {
         boolean scheduleActive;
         int mowTimeExtension;
         List<MowerStart> mowerStarts;
+
+        public boolean isScheduleActive() {
+            return scheduleActive;
+        }
+
+        public int getMowTimeExtension() {
+            return mowTimeExtension;
+        }
+
+        public List<MowerStart> getMowerStarts() {
+            return mowerStarts;
+        }
     }
 
-    public class MowerStart{
+    public static class MowerStart{
         String timeOfDay;
         Duration duration;
         boolean cutEdge;
+
+        public MowerStart(String timeOfDay, Duration duration, boolean cutEdge){
+            this.timeOfDay = timeOfDay;
+            this.duration = duration;
+            this.cutEdge = cutEdge;
+        }
+
+        public String getTimeOfDay() {
+            return timeOfDay;
+        }
+
+        public Duration getDuration() {
+            return duration;
+        }
+
+        public boolean isCutEdge() {
+            return cutEdge;
+        }
     }
 
     public static class Battery{

@@ -16,6 +16,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
+import java.time.DayOfWeek;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.concurrent.ScheduledFuture;
@@ -42,6 +43,7 @@ import org.eclipse.smarthome.core.thing.ThingStatusDetail;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
 import org.eclipse.smarthome.core.types.RefreshType;
+import org.openhab.binding.worxlandroid.internal.WorxLandroidException;
 import org.openhab.binding.worxlandroid.internal.mqtt.ErrorCodeEnum;
 import org.openhab.binding.worxlandroid.internal.mqtt.MowerCommandEnum;
 import org.openhab.binding.worxlandroid.internal.mqtt.MowerInfo;
@@ -56,25 +58,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_CHARGE_CYCLES;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_CHARGING;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_PERCENTAGE;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_STATE;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_TEMPERATURE;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BATTERY_VOLTAGE;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.BLADE_WORKING_TIME;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.DISTANCE_COVERED;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.ERROR_CODE;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.ERROR_DESCRIPTION;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.LAST_UPDATE;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.MOWER_COMMAND;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.MOWER_WORKING_TIME;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.RSI;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.SERIAL_NUMBER;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.STATUS_CODE;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.STATUS_DESCRIPTION;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.TOPIC_COMMAND_IN;
-import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.TOPIC_COMMAND_OUT;
+import static org.openhab.binding.worxlandroid.internal.WorxLandroidBindingConstants.*;
 
 /**
  * The {@link WorxLandroidHandler} is responsible for handling commands, which are
@@ -127,16 +111,19 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
             refreshJob = scheduler.scheduleWithFixedDelay(statusJob, 0,
                     DEFAULT_REFRESH_INTERVAL, TimeUnit.MINUTES);
         }
+
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        if (MOWER_COMMAND.equals(channelUID.getId())) {
+        if ((OTHER+"#"+MOWER_COMMAND).equals(channelUID.getId())) {
             if (command instanceof RefreshType) {
                 logger.error("Channel {} does not support any commands", channelUID);
+                return;
             }
             try {
-                String message = "{\"cmd\":\"" + MowerCommandEnum.valueOf(command.toString()).id + "\"}";
+                String message = "{\"cmd\":" + MowerCommandEnum.valueOf(command.toString()).id + "}";
+                logger.debug("Sending command {} to works server",message);
                 mqttConnection.sendMessage(message);
             } catch (MqttException e) {
                 logger.error("Error while updating channel {}", channelUID);
@@ -175,8 +162,14 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
 
     private Runnable statusJob = () -> {
         String serialNumber = (String) config.get(SERIAL_NUMBER);
-        Mower mower = bridge.getWorxLandroidRESTConnection().getMowerStatus(serialNumber);
-        logger.debug("Reply for status call on serial {} : {}", serialNumber, mower);
+        Mower mower = null;
+        try {
+            mower = bridge.getWorxLandroidRESTConnection().getMowerStatus(serialNumber);
+        } catch (WorxLandroidException e) {
+            updateStatus(ThingStatus.OFFLINE,ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+        }
+
+        logger.debug("Reply for status call on serial {} : {}", serialNumber, mower.isOnline());
         if (mower.isOnline()) {
             updateStatus(ThingStatus.ONLINE);
             if (mqttConnection != null) {
@@ -218,35 +211,80 @@ public class WorxLandroidHandler extends BaseThingHandler implements MqttCallbac
         }
 
         logger.debug("Parsed object serial number: {}", mowerInfo.getConfiguration().getSerialNumber());
-
         logger.debug("Parsed object RSI: {}", mowerInfo.getData().getRsi());
-        updateState(RSI, new DecimalType(mowerInfo.getData().getRsi()));
+
+        updateState(OTHER+"#"+RSI, new DecimalType(mowerInfo.getData().getRsi()));
         logger.debug("Parsed object Battery temperature: {}", mowerInfo.getData().getBattery().getTemperature());
-        updateState(BATTERY_TEMPERATURE, new QuantityType<>(mowerInfo.getData().getBattery().getTemperature(), SIUnits.CELSIUS));
-        updateState(DISTANCE_COVERED, new QuantityType<>(mowerInfo.getData().getStatistic().getDistance(), SIUnits.METRE));
-        updateState(MOWER_WORKING_TIME, new QuantityType<>(mowerInfo.getData().getStatistic().getWorkingTime().toHours(), SmartHomeUnits.HOUR));
-        updateState(BLADE_WORKING_TIME, new QuantityType<>(mowerInfo.getData().getStatistic().getBladeWorkingTime().toHours(), SmartHomeUnits.HOUR));
-        updateState(BATTERY_CHARGE_CYCLES, new DecimalType(mowerInfo.getData().getBattery().getChargeCycle()));
-        updateState(BATTERY_VOLTAGE, new QuantityType<>(mowerInfo.getData().getBattery().getVoltage(), SmartHomeUnits.VOLT));
-        updateState(BATTERY_PERCENTAGE, new DecimalType(mowerInfo.getData().getBattery().getPercentage()));
-        updateState(BATTERY_CHARGING, OnOffType.from(mowerInfo.getData().getBattery().isCharging()));
-        updateState(BATTERY_STATE, new DecimalType(mowerInfo.getData().getBattery().getState()));
-        updateState(STATUS_CODE, new DecimalType(mowerInfo.getData().getStatus()));
-        updateState(STATUS_DESCRIPTION, new StringType(StatusCodeEnum.getById(mowerInfo.getData().getStatus()).toString()));
-        updateState(ERROR_CODE, new DecimalType(mowerInfo.getData().getError()));
-        updateState(ERROR_DESCRIPTION, new StringType(ErrorCodeEnum.getById(mowerInfo.getData().getError()).toString()));
+        updateState(STATISTICS+"#"+DISTANCE_COVERED, new QuantityType<>(mowerInfo.getData().getStatistic().getDistance(), SIUnits.METRE));
+        updateState(STATISTICS+"#"+MOWER_WORKING_TIME, new QuantityType<>(mowerInfo.getData().getStatistic().getWorkingTime().toHours(), SmartHomeUnits.HOUR));
+        updateState(STATISTICS+"#"+BLADE_WORKING_TIME, new QuantityType<>(mowerInfo.getData().getStatistic().getBladeWorkingTime().toHours(), SmartHomeUnits.HOUR));
+        updateState(BATTERY_GROUP+"#"+BATTERY_TEMPERATURE, new QuantityType<>(mowerInfo.getData().getBattery().getTemperature(), SIUnits.CELSIUS));
+        updateState(BATTERY_GROUP+"#"+BATTERY_CHARGE_CYCLES, new DecimalType(mowerInfo.getData().getBattery().getChargeCycle()));
+        updateState(BATTERY_GROUP+"#"+BATTERY_VOLTAGE, new QuantityType<>(mowerInfo.getData().getBattery().getVoltage(), SmartHomeUnits.VOLT));
+        updateState(BATTERY_GROUP+"#"+BATTERY_PERCENTAGE, new DecimalType(mowerInfo.getData().getBattery().getPercentage()));
+        updateState(BATTERY_GROUP+"#"+BATTERY_CHARGING, OnOffType.from(mowerInfo.getData().getBattery().isCharging()));
+        updateState(BATTERY_GROUP+"#"+BATTERY_STATE, new DecimalType(mowerInfo.getData().getBattery().getState()));
+        updateState(OTHER+"#"+STATUS_CODE, new DecimalType(mowerInfo.getData().getStatus()));
+        updateState(OTHER+"#"+STATUS_DESCRIPTION, new StringType(StatusCodeEnum.getById(mowerInfo.getData().getStatus()).toString()));
+        updateState(OTHER+"#"+ERROR_CODE, new DecimalType(mowerInfo.getData().getError()));
+        updateState(OTHER+"#"+ERROR_DESCRIPTION, new StringType(ErrorCodeEnum.getById(mowerInfo.getData().getError()).toString()));
         ZonedDateTime zonedDateTime = mowerInfo.getConfiguration().getDateTime().atZone(ZoneId.systemDefault());
-        updateState(LAST_UPDATE, new DateTimeType(zonedDateTime));
+        updateState(OTHER+"#"+LAST_UPDATE, new DateTimeType(zonedDateTime));
+
+        // Monday
+        MowerInfo.MowerStart mowerStart = mowerInfo.getConfiguration().getSchedule().getMowerStarts().get(DayOfWeek.MONDAY.getValue()+1);
+        updateState(SCHEDULE_GROUP+"#"+ START_TIME_MONDAY,new StringType(mowerStart.getTimeOfDay()));
+        logger.debug("Mower duration Monday: {} - in minutes: ",mowerStart.getDuration(),mowerStart.getDuration().toMinutes());
+        updateState(SCHEDULE_GROUP+"#"+ DURATION_MONDAY,new QuantityType<>(mowerStart.getDuration().toMinutes(),SmartHomeUnits.MINUTE));
+        updateState(SCHEDULE_GROUP+"#"+ CUT_EDGE_MONDAY,OnOffType.from(mowerStart.isCutEdge()));
+
+        // Tuesday
+        mowerStart = mowerInfo.getConfiguration().getSchedule().getMowerStarts().get(DayOfWeek.TUESDAY.getValue()+1);
+        updateState(SCHEDULE_GROUP+"#"+ START_TIME_TUESDAY,new StringType(mowerStart.getTimeOfDay()));
+        logger.debug("Mower duration Tuesday: {} - in minutes: ",mowerStart.getDuration(),mowerStart.getDuration().toMinutes());
+        updateState(SCHEDULE_GROUP+"#"+ DURATION_TUESDAY,new QuantityType<>(mowerStart.getDuration().toMinutes(),SmartHomeUnits.MINUTE));
+        updateState(SCHEDULE_GROUP+"#"+ CUT_EDGE_TUESDAY,OnOffType.from(mowerStart.isCutEdge()));
+
+        // Wednesday
+        mowerStart = mowerInfo.getConfiguration().getSchedule().getMowerStarts().get(DayOfWeek.WEDNESDAY.getValue()+1);
+        updateState(SCHEDULE_GROUP+"#"+ START_TIME_WEDNESDAY,new StringType(mowerStart.getTimeOfDay()));
+        logger.debug("Mower duration Wednesday: {} - in minutes: ",mowerStart.getDuration(),mowerStart.getDuration().toMinutes());
+        updateState(SCHEDULE_GROUP+"#"+ DURATION_WEDNESDAY,new QuantityType<>(mowerStart.getDuration().toMinutes(),SmartHomeUnits.MINUTE));
+        updateState(SCHEDULE_GROUP+"#"+ CUT_EDGE_WEDNESDAY,OnOffType.from(mowerStart.isCutEdge()));
+
+        // Thursday
+        mowerStart = mowerInfo.getConfiguration().getSchedule().getMowerStarts().get(DayOfWeek.THURSDAY.getValue()+1);
+        updateState(SCHEDULE_GROUP+"#"+ START_TIME_THURSDAY,new StringType(mowerStart.getTimeOfDay()));
+        logger.debug("Mower duration Thursday: {} - in minutes: ",mowerStart.getDuration(),mowerStart.getDuration().toMinutes());
+        updateState(SCHEDULE_GROUP+"#"+ DURATION_THURSDAY,new QuantityType<>(mowerStart.getDuration().toMinutes(),SmartHomeUnits.MINUTE));
+        updateState(SCHEDULE_GROUP+"#"+ CUT_EDGE_THURSDAY,OnOffType.from(mowerStart.isCutEdge()));
+
+        // Friday
+        mowerStart = mowerInfo.getConfiguration().getSchedule().getMowerStarts().get(DayOfWeek.FRIDAY.getValue()+1);
+        updateState(SCHEDULE_GROUP+"#"+ START_TIME_FRIDAY,new StringType(mowerStart.getTimeOfDay()));
+        logger.debug("Mower duration Friday: {} - in minutes: ",mowerStart.getDuration(),mowerStart.getDuration().toMinutes());
+        updateState(SCHEDULE_GROUP+"#"+ DURATION_FRIDAY,new QuantityType<>(mowerStart.getDuration().toMinutes(),SmartHomeUnits.MINUTE));
+        updateState(SCHEDULE_GROUP+"#"+ CUT_EDGE_FRIDAY,OnOffType.from(mowerStart.isCutEdge()));
+
+        // Saturday
+        mowerStart = mowerInfo.getConfiguration().getSchedule().getMowerStarts().get(DayOfWeek.SATURDAY.getValue()+1);
+        updateState(SCHEDULE_GROUP+"#"+ START_TIME_SATURDAY,new StringType(mowerStart.getTimeOfDay()));
+        logger.debug("Mower duration Saturday: {} - in minutes: ",mowerStart.getDuration(),mowerStart.getDuration().toMinutes());
+        updateState(SCHEDULE_GROUP+"#"+ DURATION_SATURDAY,new QuantityType<>(mowerStart.getDuration().toMinutes(),SmartHomeUnits.MINUTE));
+        updateState(SCHEDULE_GROUP+"#"+ CUT_EDGE_SATURDAY,OnOffType.from(mowerStart.isCutEdge()));
+
+        // Sunday
+        mowerStart = mowerInfo.getConfiguration().getSchedule().getMowerStarts().get(DayOfWeek.SUNDAY.getValue()-6);
+        updateState(SCHEDULE_GROUP+"#"+ START_TIME_SUNDAY,new StringType(mowerStart.getTimeOfDay()));
+        logger.debug("Mower duration Sunday: {} - in minutes: ",mowerStart.getDuration(),mowerStart.getDuration().toMinutes());
+        updateState(SCHEDULE_GROUP+"#"+ DURATION_SUNDAY,new QuantityType<>(mowerStart.getDuration().toMinutes(),SmartHomeUnits.MINUTE));
+        updateState(SCHEDULE_GROUP+"#"+ CUT_EDGE_SUNDAY,OnOffType.from(mowerStart.isCutEdge()));
     }
 
     @Override
     public void deliveryComplete(@Nullable IMqttDeliveryToken iMqttDeliveryToken) {
-        if (iMqttDeliveryToken != null) {
-            try {
-                logger.debug("Message {} delivered successfully.", iMqttDeliveryToken.getMessage().getPayload());
-            } catch (MqttException e) {
-                logger.error("Error while retrieving delivered message content: ", e);
-            }
+        if (iMqttDeliveryToken != null ) {
+            logger.debug("Message nr {} with content delivered successfully.", iMqttDeliveryToken.getMessageId());
         }
     }
 }
